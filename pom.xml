@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.icgc_argo</groupId>
+    <artifactId>workflow-graph-lib</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Library functions used throughout Workflow Graph Components</description>
+    <url>https://github.com/icgc-argo/workflow-graph-lib</url>
+
+    <licenses>
+        <license>
+            <name>AGPL-3.0</name>
+            <url>https://raw.githubusercontent.com/icgc-argo/workflow-graph-lib/develop/LICENSE</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Alexandru Lepsa</name>
+            <email>lepsalex@gmail.com</email>
+            <organization>OICR</organization>
+            <organizationUrl>https://oicr.on.ca/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/icgc-argo/workflow-graph-lib.git</connection>
+        <developerConnection>scm:git:ssh://github.com:icgc-argo/workflow-graph-lib.git</developerConnection>
+        <url>https://github.com/icgc-argo/workflow-graph-lib/tree/master</url>
+    </scm>
+</project>
+
