@@ -1,10 +1,9 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
-import lombok.extern.slf4j.Slf4j;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
-import org.icgc_argo.workflow_graph_lib.polyglot.enums.EdgeFunctionLanguage;
+import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
 import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
 
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Map;
 import static java.lang.String.format;
 import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
-@Slf4j
 public class Polyglot {
   protected static final Context ctx = Context.newBuilder("python", "js").build();
 
@@ -28,15 +26,15 @@ public class Polyglot {
    * @return generic value type returned by user function
    */
   public static Value runMainFunctionWithData(
-      final EdgeFunctionLanguage language,
+      final GraphFunctionLanguage language,
       final String scriptContent,
       final Map<String, Object> data) {
-    return PatternMatch.<EdgeFunctionLanguage, Value>match(language)
+    return PatternMatch.<GraphFunctionLanguage, Value>match(language)
         .on(
-            lang -> lang.equals(EdgeFunctionLanguage.JS),
+            lang -> lang.equals(GraphFunctionLanguage.JS),
             () -> runJsScript(format("function main(data) { %s }", scriptContent), data))
         .on(
-            lang -> lang.equals(EdgeFunctionLanguage.PYTHON),
+            lang -> lang.equals(GraphFunctionLanguage.PYTHON),
             () -> runPythonScript(format("def main(data):\n    %s", scriptContent), data))
         .otherwise(
             () -> {
@@ -46,7 +44,7 @@ public class Polyglot {
   }
 
   public static Value runMainFunctionWithData(
-      final EdgeFunctionLanguage language, final String scriptContent, final String data) {
+      final GraphFunctionLanguage language, final String scriptContent, final String data) {
     return runMainFunctionWithData(language, scriptContent, toMap(data));
   }
 

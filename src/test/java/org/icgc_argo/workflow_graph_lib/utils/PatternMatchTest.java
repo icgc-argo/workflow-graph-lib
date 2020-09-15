@@ -1,13 +1,13 @@
 package org.icgc_argo.workflow_graph_lib.utils;
 
 import lombok.val;
-import org.icgc_argo.workflow_graph_lib.polyglot.enums.EdgeFunctionLanguage;
+import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
 
-import static org.icgc_argo.workflow_graph_lib.polyglot.enums.EdgeFunctionLanguage.JS;
-import static org.icgc_argo.workflow_graph_lib.polyglot.enums.EdgeFunctionLanguage.PYTHON;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PatternMatchTest {
@@ -88,7 +88,7 @@ public class PatternMatchTest {
     // this test is basically the runEdgeFilterScript match
     Function<Integer, Integer> plusTwo = (Integer num) -> num + 2;
     val result =
-        PatternMatch.<EdgeFunctionLanguage, Integer>match(JS)
+        PatternMatch.<GraphFunctionLanguage, Integer>match(JS)
             .on(x -> x.equals(JS), () -> plusTwo.apply(2))
             .on(x -> x.equals(PYTHON), () -> 0)
             .otherwise(() -> 0);

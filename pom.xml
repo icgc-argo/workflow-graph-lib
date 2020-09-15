@@ -39,7 +39,6 @@
         <jackson-databind.version>2.11.1</jackson-databind.version>
         <lombok.version>1.18.12</lombok.version>
         <junit.bom.version>5.7.0</junit.bom.version>
-        <slf4j.version>1.7.28</slf4j.version>
         <maven.surefire.version>2.22.2</maven.surefire.version>
     </properties>
 
@@ -81,13 +80,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- LOGGING -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
         </dependency>
     </dependencies>
 
