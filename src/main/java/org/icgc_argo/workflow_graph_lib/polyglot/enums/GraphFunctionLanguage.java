@@ -1,17 +1,22 @@
 package org.icgc_argo.workflow_graph_lib.polyglot.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum GraphFunctionLanguage {
-    JS("js"),
-    PYTHON("python");
+  @JsonProperty("js")
+  JS("js"),
 
-    private final String text;
+  @JsonProperty("python")
+  PYTHON("python");
 
-    GraphFunctionLanguage(final String text) {
-        this.text = text;
-    }
+  private final String text;
 
-    @Override
-    public String toString() {
-        return text;
-    }
+  GraphFunctionLanguage(final String text) {
+    this.text = text;
+  }
+
+  @Override
+  public String toString() {
+    return text;
+  }
 }
