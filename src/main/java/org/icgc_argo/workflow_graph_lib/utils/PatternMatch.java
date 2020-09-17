@@ -16,7 +16,10 @@ import java.util.function.Supplier;
  * <p>.otherwise(x -> x * 10); <br>
  * <br>
  *
- * <p>assertEquals(500, result);
+ * <p>assertEquals(500, result) == true<br>
+ *<br>
+ *
+ * <p>NOTE: Refer to PatternMatchTest class for extensive usage examples</p>
  */
 public class PatternMatch {
 
