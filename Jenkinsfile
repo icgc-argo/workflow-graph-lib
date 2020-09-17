@@ -1,14 +1,7 @@
-def dockerHubRepo = "icgcargo/workflow-graph-lib"
 def gitHubRepo = "icgc-argo/workflow-graph-lib"
-def chartVersion = "0.5.0"
 def commit = "UNKNOWN"
 def version = "UNKNOWN"
 
-def dockerHubRepo = "icgcargo/workflow-management"
-def gitHubRepo = "icgc-argo/workflow-management"
-def chartVersion = "0.5.0"
-def commit = "UNKNOWN"
-def version = "UNKNOWN"
 
 pipeline {
     agent {
