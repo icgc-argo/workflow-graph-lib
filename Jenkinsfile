@@ -6,15 +6,15 @@ def version = "UNKNOWN"
 pipeline {
     agent {
         kubernetes {
-            label 'wf-management'
+            label 'wf-graph-lib'
             yaml """
 apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: jdk
+  - name: mvn
     tty: true
-    image: openjdk:11
+    image: maven:3.6.3-openjdk-11
     env:
       - name: DOCKER_HOST
         value: tcp://localhost:2375
@@ -56,19 +56,22 @@ spec:
 
         stage('Test') {
             steps {
-                container('jdk') {
-                    sh "./mvnw test"
+                container('mvn') {
+                    sh "mvn test"
                 }
             }
         }
 
         stage('Build & Publish') {
              when {
-                branch "develop"
+                anyOf {
+                    branch "master"
+                    branch "develop"
+                }
             }
             steps {
-                container('jdk') {
-                    sh "./mvnw deploy"
+                container('mvn') {
+                    sh "mvn deploy"
                 }
             }
         }
