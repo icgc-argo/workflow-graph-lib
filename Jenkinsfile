@@ -37,7 +37,7 @@ spec:
                 }
             }
         }
-        stage('Build & Publish') {
+        stage('Build Artifact & Publish') {
              when {
                 anyOf {
                     branch "master"
@@ -46,7 +46,10 @@ spec:
             }
             steps {
                 container('maven') {
-                    sh "mvn deploy"
+                    configFileProvider(
+                        [configFile(fileId: '894c5ba8-e7cf-4465-98d4-b213eeaa77ef', variable: 'MAVEN_SETTINGS')]) {
+                        sh 'mvn -s $MAVEN_SETTINGS clean package deploy'
+                    }
                 }
             }
         }
