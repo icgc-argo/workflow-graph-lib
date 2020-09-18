@@ -13,13 +13,13 @@ kind: Pod
 spec:
   containers:
   - name: maven
+    command: ['cat']
     tty: true
     image: maven:3.6.3-openjdk-11
 """
         }
     }
     stages {
-        
         stage('Prepare') {
             steps {
                 script {
@@ -30,7 +30,6 @@ spec:
                 }
             }
         }
-
         stage('Test') {
             steps {
                 container('maven') {
@@ -38,7 +37,6 @@ spec:
                 }
             }
         }
-
         stage('Build & Publish') {
              when {
                 anyOf {
