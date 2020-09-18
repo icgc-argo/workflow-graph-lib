@@ -1,9 +1,8 @@
 package org.icgc_argo.workflow_graph_lib.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
-
 import java.util.Map;
+import lombok.SneakyThrows;
 
 /** Utility functions for Jackson for common operations */
 public class JacksonUtils {

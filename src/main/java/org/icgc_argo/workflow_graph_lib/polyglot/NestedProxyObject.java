@@ -1,11 +1,10 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
+import java.util.Collection;
+import java.util.Map;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * ProxyObject wrapper class that wraps the nested maps on-the-fly. Workaround for:

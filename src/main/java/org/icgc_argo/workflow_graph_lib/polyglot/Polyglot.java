@@ -1,15 +1,14 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
+import static java.lang.String.format;
+import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
+
+import java.util.Map;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
 import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
-
-import java.util.Map;
-
-import static java.lang.String.format;
-import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
 /**
  * Provides a single static context for all GraalVM Polyglot function executions as well as generic
