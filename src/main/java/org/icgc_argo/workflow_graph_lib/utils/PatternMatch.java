@@ -17,9 +17,9 @@ import java.util.function.Supplier;
  * <br>
  *
  * <p>assertEquals(500, result) == true<br>
- *<br>
+ * <br>
  *
- * <p>NOTE: Refer to PatternMatchTest class for extensive usage examples</p>
+ * <p>NOTE: Refer to PatternMatchTest class for extensive usage examples
  */
 public class PatternMatch {
 
