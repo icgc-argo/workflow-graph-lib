@@ -4,7 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.icgc_argo</groupId>
+    <parent>
+        <groupId>org.icgc_argo</groupId>
+        <artifactId>workflow-graph-parent-pom</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
     <artifactId>workflow-graph-lib</artifactId>
     <version>1.1.0-SNAPSHOT</version>
 
@@ -33,46 +38,22 @@
         <url>https://github.com/icgc-argo/workflow-graph-lib/tree/master</url>
     </scm>
 
-    <properties>
-        <java.version>11</java.version>
-        <graalvm-sdk.version>20.1.0</graalvm-sdk.version>
-        <jackson-databind.version>2.11.1</jackson-databind.version>
-        <lombok.version>1.18.12</lombok.version>
-        <junit.bom.version>5.7.0</junit.bom.version>
-        <maven.surefire.version>2.22.2</maven.surefire.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit.bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
 
         <!-- CORE -->
         <dependency>
             <groupId>org.graalvm.sdk</groupId>
             <artifactId>graal-sdk</artifactId>
-            <version>${graalvm-sdk.version}</version>
         </dependency>
 
         <!-- UTIL -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
         </dependency>
 
         <!-- TEST -->
@@ -88,29 +69,19 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.version}</version>
             </plugin>
         </plugins>
     </build>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>dcc-snapshot</id>
-            <name>artifacts.oicr.on.ca-snapshots</name>
-            <url>https://artifacts.oicr.on.ca/artifactory/dcc-snapshot</url>
-        </snapshotRepository>
+    <repositories>
         <repository>
             <id>dcc-release</id>
             <name>artifacts.oicr.on.ca-releases</name>
             <url>https://artifacts.oicr.on.ca/artifactory/dcc-release</url>
         </repository>
-    </distributionManagement>
+    </repositories>
 </project>
 

@@ -1,15 +1,16 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
+import static java.lang.String.format;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
+import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
+
+import java.util.Map;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
 import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
-
-import java.util.Map;
-
-import static java.lang.String.format;
-import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
 /**
  * Provides a single static context for all GraalVM Polyglot function executions as well as generic
@@ -25,8 +26,7 @@ public class Polyglot {
    * @param language polyglot language context to be used to execute scriptContent
    * @param scriptContent user defined script to be executed in chosen language
    * @param data object/dictionary/map-like data structure to be passed as the single argument for
-   *     the user defined function, accepts both Java Map and String, the latter of which is
-   *     transformed into a Map before being marshalled into a NestedProxyObject
+   *     the user defined function
    * @return generic value type returned by user function
    */
   public static Value runMainFunctionWithData(
@@ -47,13 +47,66 @@ public class Polyglot {
             });
   }
 
+  /**
+   * Runs a user defined function using the language specified with, a single argument that is
+   * marshalled into a NestedProxyObject.
+   *
+   * @param language polyglot language context to be used to execute scriptContent
+   * @param scriptContent user defined script to be executed in chosen language
+   * @param data string input that can be converted to a map using utils.JacksonUtils.toMap, will be
+   *     passed as the single argument for the user defined function
+   * @return generic value type returned by user function
+   */
   public static Value runMainFunctionWithData(
       final GraphFunctionLanguage language, final String scriptContent, final String data) {
     return runMainFunctionWithData(language, scriptContent, toMap(data));
   }
 
-  protected static org.graalvm.polyglot.Value runJsScript(
-      final String jsScript, final Map<String, Object> eventMap) {
+  /**
+   * Evaluates a user defined boolean expression using the language specified, has access to data
+   * passed in, which is marshalled into a NestedProxyObject
+   *
+   * @param language polyglot language context to be used to evaluate expression
+   * @param expression ser defined expression to be evaluated in chosen language
+   * @param data object/dictionary/map-like data structure to be made available as language native
+   *     data object (object in JS, dictionary in python) inside expression context
+   * @return result of evaluate boolean expression
+   */
+  public static Value evaluateBooleanExpression(
+      final GraphFunctionLanguage language,
+      final String expression,
+      final Map<String, Object> data) {
+    return PatternMatch.<GraphFunctionLanguage, Value>match(language)
+        .on(
+            lang -> lang.equals(JS),
+            () -> runJsScript(format("function main(data) { return %s; }", expression), data))
+        .on(
+            lang -> lang.equals(PYTHON),
+            () -> runPythonScript(format("def main(data):\n    return %s", expression), data))
+        .otherwise(
+            () -> {
+              throw new UnsupportedOperationException(
+                  format("Operation %s is not supported", language));
+            });
+  }
+
+  /**
+   * Evaluates a user defined boolean expression using the language specified, has access to data
+   * passed in, which is marshalled into a NestedProxyObject
+   *
+   * @param language polyglot language context to be used to evaluate expression
+   * @param expression ser defined expression to be evaluated in chosen language
+   * @param data string input that can be converted to a map using utils.JacksonUtils.toMap, will be
+   *     made available as language native data object (object in JS, dictionary in python) inside
+   *     expression context
+   * @return result of evaluate boolean expression
+   */
+  public static Value evaluateBooleanExpression(
+      final GraphFunctionLanguage language, final String expression, final String data) {
+    return evaluateBooleanExpression(language, expression, toMap(data));
+  }
+
+  protected static Value runJsScript(final String jsScript, final Map<String, Object> eventMap) {
     return runFunctionMain("js", "js", "script.js", jsScript, eventMap);
   }
 

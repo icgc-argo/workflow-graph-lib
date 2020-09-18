@@ -1,14 +1,13 @@
 package org.icgc_argo.workflow_graph_lib.utils;
 
-import lombok.val;
-import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
-import org.junit.jupiter.api.Test;
-
-import java.util.function.Function;
-
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.function.Function;
+import lombok.val;
+import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
+import org.junit.jupiter.api.Test;
 
 public class PatternMatchTest {
 
