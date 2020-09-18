@@ -11,6 +11,10 @@ import java.util.Map;
 import static java.lang.String.format;
 import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
+/**
+ * Provides a single static context for all GraalVM Polyglot function executions as well as generic
+ * static functions that are used to execute code in that GraalVM Polyglot context
+ */
 public class Polyglot {
   protected static final Context ctx = Context.newBuilder("python", "js").build();
 
