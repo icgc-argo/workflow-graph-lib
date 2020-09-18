@@ -7,11 +7,12 @@ import org.graalvm.polyglot.proxy.ProxyObject;
 import java.util.Collection;
 import java.util.Map;
 
-// Workaround for: https://github.com/graalvm/graaljs/issues/79
-// Original impl:
-// https://github.com/oracle/graal/blob/34bbd8c6326d21523133bcdd00e822a7f69a9ee7/sdk/src/org.graalvm.polyglot/src/org/graalvm/polyglot/proxy/ProxyObject.java#L122
+/**
+ * ProxyObject wrapper class that wraps the nested maps on-the-fly. Workaround for:
+ * https://github.com/graalvm/graaljs/issues/79. Original impl:
+ * https://github.com/oracle/graal/blob/34bbd8c6326d21523133bcdd00e822a7f69a9ee7/sdk/src/org.graalvm.polyglot/src/org/graalvm/polyglot/proxy/ProxyObject.java#L122
+ */
 public class NestedProxyObject implements ProxyObject {
-
   Map<String, Object> values;
 
   public NestedProxyObject(Map<String, Object> values) {
