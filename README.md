@@ -7,6 +7,33 @@ Common libraries and utilities for Workflow-Graph.
 
 ## Use
 
+### Exceptions
+
+All exceptions inherit from 4 possible abstract base classes that inform how we are to handle any inheriting exception
+within our pipeline stream context. This forms a matrix of error states that can be expressed as a boolean vector (voluntary t/f, retryable t/f) .
+By inheriting from these 4 possible states we can be specific as to where the error has occurred within our code while not having to reason about 
+the handling logic within the pipeline context on a per exception basic as that is baked into the hierarchy and so our pipelines need only
+handle these four base classes while our components extend and specify as needed.
+
+`RequeueableException` - exceptions that are involuntary and retryable
+
+`DeadLetterQueueableException` - exceptions that are involuntary and not retryable
+
+`NotAcknowledgeableException` - exceptions that are voluntary and retryable (ie. filter fail)
+
+`CommittableException` - exceptions that are voluntary and not retryable (ie. activation function returns false)
+
+Below is an example of where the `CommittableException` falls in this matrix:
+
+```
+ ______________________________________________
+ |                | Voluntary  | Involuntary  |
+ |============================================|
+ | Retryable      |            |              |
+ |--------------------------------------------|
+ | Non-Retryable  |     X      |              |
+ |____________________________________________|
+```
 ### Maven Dependency
 
 #### Release
