@@ -61,7 +61,7 @@ public class Polyglot {
     } catch (IllegalStateException | ClassCastException ex) {
       throw new GraphFunctionValueException(
           format(
-              "Unable to convert returned ProxyObject to Map<String, Object>: %s",
+              "Unable to convert returned value to Map<String, Object>: %s",
               ex.getLocalizedMessage()));
     }
   }
