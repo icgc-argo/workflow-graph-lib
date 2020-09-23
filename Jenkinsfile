@@ -13,6 +13,7 @@ kind: Pod
 spec:
   containers:
   - name: graal
+    command: ['cat']
     tty: true
     image: icgcargo/graalvm:java11-20.2.0
 """
