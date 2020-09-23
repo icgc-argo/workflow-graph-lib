@@ -1,5 +1,11 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
+import static java.lang.String.format;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
+import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
+
+import java.util.Map;
 import lombok.val;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -10,13 +16,6 @@ import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionExcepti
 import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionUnsupportedLanguageException;
 import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionValueException;
 import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
-
-import java.util.Map;
-
-import static java.lang.String.format;
-import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
-import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
-import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
 /**
  * Provides a single static context for all GraalVM Polyglot function executions as well as generic

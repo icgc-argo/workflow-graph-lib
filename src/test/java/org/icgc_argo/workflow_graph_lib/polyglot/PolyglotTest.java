@@ -1,17 +1,16 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
-import lombok.val;
-import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionException;
-import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionValueException;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-
 import static org.icgc_argo.workflow_graph_lib.polyglot.Polyglot.evaluateBooleanExpression;
 import static org.icgc_argo.workflow_graph_lib.polyglot.Polyglot.runMainFunctionWithData;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Map;
+import lombok.val;
+import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionException;
+import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionValueException;
+import org.junit.jupiter.api.Test;
 
 public class PolyglotTest {
 
