@@ -14,7 +14,7 @@ spec:
   containers:
   - name: graal
     tty: true
-    image: docker.pkg.github.com/graalvm/container/community:java11-20.2.0
+    image: icgcargo/graalvm:java11-20.2.0
 """
         }
     }
