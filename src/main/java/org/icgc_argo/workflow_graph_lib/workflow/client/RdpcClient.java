@@ -1,12 +1,15 @@
 package org.icgc_argo.workflow_graph_lib.workflow.client;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.ApolloClient;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
@@ -16,9 +19,12 @@ import okhttp3.OkHttpClient;
 import org.icgc_argo.workflow_graph_lib.exceptions.DeadLetterQueueableException;
 import org.icgc_argo.workflow_graph_lib.exceptions.GraphException;
 import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
+import org.icgc_argo.workflow_graph_lib.graphql.client.GetAnalysisForGraphEventQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.GetWorkflowStateQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.StartRunMutation;
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams;
+import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
+import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
 import org.icgc_argo.workflow_graph_lib.workflow.model.RunRequest;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
@@ -168,6 +174,62 @@ public class RdpcClient {
   }
 
   /**
+   * Create a GraphEvent for a given analysisId
+   *
+   * @param analysisId The analysisId of the analysis to use as string
+   * @return Returns a Mono of GraphEvent for the analysis
+   */
+  public Mono<GraphEvent> createGraphEventForAnalysis(String analysisId) {
+    return Mono.create(
+        sink ->
+            client
+                .query(new GetAnalysisForGraphEventQuery(analysisId))
+                .enqueue(
+                    new ApolloCall.Callback<>() {
+                      final Runnable commonSinkErrorHandler =
+                          () ->
+                              sinkError(
+                                  sink,
+                                  format(
+                                      "Analysis %s is in compatible with schema Analysis!",
+                                      analysisId));
+
+                      @Override
+                      public void onResponse(
+                          @NotNull
+                              Response<Optional<GetAnalysisForGraphEventQuery.Data>> response) {
+                        Objects.requireNonNull(
+                                response.getData(), format("Response for %s is null!", analysisId))
+                            .ifPresentOrElse(
+                                data ->
+                                    data.getAnalyses()
+                                        .ifPresentOrElse(
+                                            analyses ->
+                                                analyses.stream()
+                                                    .findFirst()
+                                                    .ifPresentOrElse(
+                                                        analysis ->
+                                                            sink.success(
+                                                                analysisToGraphEventConverter(
+                                                                    analysis)),
+                                                        commonSinkErrorHandler),
+                                            commonSinkErrorHandler),
+                                commonSinkErrorHandler);
+                      }
+
+                      @Override
+                      public void onFailure(@NotNull ApolloException e) {
+                        sink.error(e);
+                      }
+
+                      private void sinkError(MonoSink<?> sink, String message) {
+                        log.error(message);
+                        sink.error(new RuntimeException(message));
+                      }
+                    }));
+  }
+
+  /**
    * Handles ApolloException on the failure callback. This is where we can transform HTTP status
    * codes into exceptions.
    *
@@ -250,5 +312,32 @@ public class RdpcClient {
     builder.workDir(params.getWorkDir());
     builder.resume(params.getResume());
     return builder.build();
+  }
+
+  /**
+   * Adapter to convert between Models of workflow engine params for use with apollo
+   *
+   * @param analysis Analysis from query
+   * @return WorkflowEngineParams model owned by Apollo code gen
+   */
+  private static GraphEvent analysisToGraphEventConverter(
+      GetAnalysisForGraphEventQuery.Analysis analysis) {
+    val id = analysis.getAnalysisId();
+    val studyId = analysis.getStudyId().orElseThrow();
+    val donorIds =
+        analysis.getDonors().orElseThrow().stream()
+            .map(d -> d.getDonorId().orElseThrow())
+            .collect(toList());
+    val experiment = (Map<String, Object>) analysis.getExperiment().orElseThrow();
+    val experimentalStrategy = experiment.get("experimental_strategy").toString();
+    val analysisType = analysis.getAnalysisType().orElseThrow();
+    val analysisState = analysis.getAnalysisState().orElseThrow().toString();
+    val files =
+        analysis.getFiles().orElseThrow().stream()
+            .map(f -> new AnalysisFile(f.getDataType().orElseThrow()))
+            .collect(toList());
+
+    return new GraphEvent(
+        id, analysisState, analysisType, studyId, experimentalStrategy, donorIds, files);
   }
 }
