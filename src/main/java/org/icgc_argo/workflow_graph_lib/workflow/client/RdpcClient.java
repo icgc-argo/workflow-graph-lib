@@ -342,7 +342,7 @@ public class RdpcClient {
 
     val donorIds =
         analysis.getDonors().orElseGet(Collections::emptyList).stream()
-            .map(d -> d.getDonorId().orElseThrow())
+            .map(d -> d.getDonorId().orElse(""))
             .collect(toList());
 
    String experimentalStrategy = "";
@@ -356,7 +356,7 @@ public class RdpcClient {
 
     val files =
         analysis.getFiles().orElseGet(Collections::emptyList).stream()
-            .map(f -> new AnalysisFile(f.getDataType().orElseThrow()))
+            .map(f -> new AnalysisFile(f.getDataType().orElse("")))
             .collect(toList());
 
     return Optional.of(
