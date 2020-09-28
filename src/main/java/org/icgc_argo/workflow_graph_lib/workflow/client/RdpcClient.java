@@ -1,12 +1,15 @@
 package org.icgc_argo.workflow_graph_lib.workflow.client;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.ApolloClient;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
@@ -16,9 +19,12 @@ import okhttp3.OkHttpClient;
 import org.icgc_argo.workflow_graph_lib.exceptions.DeadLetterQueueableException;
 import org.icgc_argo.workflow_graph_lib.exceptions.GraphException;
 import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
+import org.icgc_argo.workflow_graph_lib.graphql.client.GetAnalysisForGraphEventQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.GetWorkflowStateQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.StartRunMutation;
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams;
+import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
+import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
 import org.icgc_argo.workflow_graph_lib.workflow.model.RunRequest;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
@@ -168,6 +174,71 @@ public class RdpcClient {
   }
 
   /**
+   * Create a GraphEvent for a given analysisId
+   *
+   * @param analysisId The analysisId of the analysis to use as string
+   * @return Returns a Mono of GraphEvent for the analysis
+   */
+  public Mono<GraphEvent> createGraphEventForAnalysis(String analysisId) {
+    return Mono.create(
+        sink ->
+            client
+                .query(new GetAnalysisForGraphEventQuery(analysisId))
+                .enqueue(
+                    new ApolloCall.Callback<>() {
+                      @Override
+                      public void onResponse(
+                          @NotNull
+                              Response<Optional<GetAnalysisForGraphEventQuery.Data>> response) {
+
+                        response
+                            .getData()
+                            .ifPresentOrElse(
+                                data ->
+                                    data.getAnalyses()
+                                        .ifPresentOrElse(
+                                            analyses ->
+                                                analyses.stream()
+                                                    .findFirst()
+                                                    .ifPresentOrElse(
+                                                        analysis ->
+                                                            analysisToGraphEventConverter(analysis)
+                                                                .ifPresentOrElse(
+                                                                    sink::success,
+                                                                    () ->
+                                                                        sinkError(
+                                                                            sink,
+                                                                            "Analysis couldn't be converted to GraphEvent",
+                                                                            DeadLetterQueueableException
+                                                                                .class)),
+                                                        () ->
+                                                            sinkError(
+                                                                sink,
+                                                                format(
+                                                                    "Analysis %s not found.",
+                                                                    analysisId),
+                                                                RequeueableException.class)),
+                                            () ->
+                                                sinkError(
+                                                    sink,
+                                                    format("Analysis %s not found.", analysisId),
+                                                    RequeueableException.class)),
+                                () ->
+                                    sinkError(
+                                        sink,
+                                        format("Analysis %s not found.", analysisId),
+                                        RequeueableException.class));
+                      }
+
+                      @Override
+                      public void onFailure(@NotNull ApolloException e) {
+                        log.trace("ApolloException thrown");
+                        handleApolloException(sink, e);
+                      }
+                    }));
+  }
+
+  /**
    * Handles ApolloException on the failure callback. This is where we can transform HTTP status
    * codes into exceptions.
    *
@@ -250,5 +321,52 @@ public class RdpcClient {
     builder.workDir(params.getWorkDir());
     builder.resume(params.getResume());
     return builder.build();
+  }
+
+  /**
+   * Converter to convert analysis to GraphEvent
+   *
+   * @param analysis Analysis from query
+   * @return GraphEvent defined by GraphEvent.avsc avro schema
+   */
+  private static Optional<GraphEvent> analysisToGraphEventConverter(
+      GetAnalysisForGraphEventQuery.Analysis analysis) {
+
+    // short circuit if can't build GraphEvent
+    if (analysis == null
+        || analysis.getStudyId().isEmpty()
+        || analysis.getAnalysisState().isEmpty()
+        || analysis.getAnalysisType().isEmpty()) {
+      return Optional.empty();
+    }
+
+    val donorIds =
+        analysis.getDonors().orElseGet(Collections::emptyList).stream()
+            .map(d -> d.getDonorId().orElse(""))
+            .collect(toList());
+
+   String experimentalStrategy = "";
+    try {
+      val experiment =
+          (Map<String, Object>) analysis.getExperiment().orElseGet(Collections::emptyMap);
+      experimentalStrategy = experiment.getOrDefault("experimental_strategy", "").toString();
+    } catch (Exception e) {
+      log.error("Experiment is not map", e);
+    }
+
+    val files =
+        analysis.getFiles().orElseGet(Collections::emptyList).stream()
+            .map(f -> new AnalysisFile(f.getDataType().orElse("")))
+            .collect(toList());
+
+    return Optional.of(
+        new GraphEvent(
+            analysis.getAnalysisId(),
+            analysis.getAnalysisState().get().toString(),
+            analysis.getAnalysisType().get(),
+            analysis.getStudyId().get(),
+            experimentalStrategy,
+            donorIds,
+            files));
   }
 }
