@@ -8,8 +8,8 @@ import com.apollographql.apollo.ApolloClient;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
@@ -186,20 +186,13 @@ public class RdpcClient {
                 .query(new GetAnalysisForGraphEventQuery(analysisId))
                 .enqueue(
                     new ApolloCall.Callback<>() {
-                      final Runnable commonSinkErrorHandler =
-                          () ->
-                              sinkError(
-                                  sink,
-                                  format(
-                                      "Analysis %s is in compatible with schema Analysis!",
-                                      analysisId));
-
                       @Override
                       public void onResponse(
                           @NotNull
                               Response<Optional<GetAnalysisForGraphEventQuery.Data>> response) {
-                        Objects.requireNonNull(
-                                response.getData(), format("Response for %s is null!", analysisId))
+
+                        response
+                            .getData()
                             .ifPresentOrElse(
                                 data ->
                                     data.getAnalyses()
@@ -209,22 +202,38 @@ public class RdpcClient {
                                                     .findFirst()
                                                     .ifPresentOrElse(
                                                         analysis ->
-                                                            sink.success(
-                                                                analysisToGraphEventConverter(
-                                                                    analysis)),
-                                                        commonSinkErrorHandler),
-                                            commonSinkErrorHandler),
-                                commonSinkErrorHandler);
+                                                            analysisToGraphEventConverter(analysis)
+                                                                .ifPresentOrElse(
+                                                                    sink::success,
+                                                                    () ->
+                                                                        sinkError(
+                                                                            sink,
+                                                                            "Analysis couldn't be converted to GraphEvent",
+                                                                            DeadLetterQueueableException
+                                                                                .class)),
+                                                        () ->
+                                                            sinkError(
+                                                                sink,
+                                                                format(
+                                                                    "Analysis %s not found.",
+                                                                    analysisId),
+                                                                RequeueableException.class)),
+                                            () ->
+                                                sinkError(
+                                                    sink,
+                                                    format("Analysis %s not found.", analysisId),
+                                                    RequeueableException.class)),
+                                () ->
+                                    sinkError(
+                                        sink,
+                                        format("Analysis %s not found.", analysisId),
+                                        RequeueableException.class));
                       }
 
                       @Override
                       public void onFailure(@NotNull ApolloException e) {
-                        sink.error(e);
-                      }
-
-                      private void sinkError(MonoSink<?> sink, String message) {
-                        log.error(message);
-                        sink.error(new RuntimeException(message));
+                        log.trace("ApolloException thrown");
+                        handleApolloException(sink, e);
                       }
                     }));
   }
@@ -315,29 +324,48 @@ public class RdpcClient {
   }
 
   /**
-   * Adapter to convert between Models of workflow engine params for use with apollo
+   * Converter to convert analysis to GraphEvent
    *
    * @param analysis Analysis from query
-   * @return WorkflowEngineParams model owned by Apollo code gen
+   * @return GraphEvent defined by GraphEvent.avsc avro schema
    */
-  private static GraphEvent analysisToGraphEventConverter(
+  private static Optional<GraphEvent> analysisToGraphEventConverter(
       GetAnalysisForGraphEventQuery.Analysis analysis) {
-    val id = analysis.getAnalysisId();
-    val studyId = analysis.getStudyId().orElseThrow();
+
+    // short circuit if can't build GraphEvent
+    if (analysis == null
+        || analysis.getStudyId().isEmpty()
+        || analysis.getAnalysisState().isEmpty()
+        || analysis.getAnalysisType().isEmpty()) {
+      return Optional.empty();
+    }
+
     val donorIds =
-        analysis.getDonors().orElseThrow().stream()
+        analysis.getDonors().orElseGet(Collections::emptyList).stream()
             .map(d -> d.getDonorId().orElseThrow())
             .collect(toList());
-    val experiment = (Map<String, Object>) analysis.getExperiment().orElseThrow();
-    val experimentalStrategy = experiment.get("experimental_strategy").toString();
-    val analysisType = analysis.getAnalysisType().orElseThrow();
-    val analysisState = analysis.getAnalysisState().orElseThrow().toString();
+
+    val experiment = analysis.getExperiment().orElseGet(Collections::emptyMap);
+    Optional<String> experimentalStrategy = Optional.empty();
+    if (experiment instanceof Map) {
+      experimentalStrategy =
+          Optional.ofNullable(
+              (((Map<String, Object>) experiment).get("experimental_strategy").toString()));
+    }
+
     val files =
-        analysis.getFiles().orElseThrow().stream()
+        analysis.getFiles().orElseGet(Collections::emptyList).stream()
             .map(f -> new AnalysisFile(f.getDataType().orElseThrow()))
             .collect(toList());
 
-    return new GraphEvent(
-        id, analysisState, analysisType, studyId, experimentalStrategy, donorIds, files);
+    return Optional.of(
+        new GraphEvent(
+            analysis.getAnalysisId(),
+            analysis.getAnalysisState().get().toString(),
+            analysis.getAnalysisType().get(),
+            analysis.getStudyId().get(),
+            experimentalStrategy.orElseGet(() -> ""),
+            donorIds,
+            files));
   }
 }
