@@ -345,12 +345,13 @@ public class RdpcClient {
             .map(d -> d.getDonorId().orElseThrow())
             .collect(toList());
 
-    val experiment = analysis.getExperiment().orElseGet(Collections::emptyMap);
-    Optional<String> experimentalStrategy = Optional.empty();
-    if (experiment instanceof Map) {
-      experimentalStrategy =
-          Optional.ofNullable(
-              (((Map<String, Object>) experiment).get("experimental_strategy").toString()));
+   String experimentalStrategy = "";
+    try {
+      val experiment =
+          (Map<String, Object>) analysis.getExperiment().orElseGet(Collections::emptyMap);
+      experimentalStrategy = experiment.getOrDefault("experimental_strategy", "").toString();
+    } catch (Exception e) {
+      log.error("Experiment is not map", e);
     }
 
     val files =
@@ -364,7 +365,7 @@ public class RdpcClient {
             analysis.getAnalysisState().get().toString(),
             analysis.getAnalysisType().get(),
             analysis.getStudyId().get(),
-            experimentalStrategy.orElseGet(() -> ""),
+            experimentalStrategy,
             donorIds,
             files));
   }
