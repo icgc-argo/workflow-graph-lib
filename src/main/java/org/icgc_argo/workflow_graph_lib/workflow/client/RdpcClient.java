@@ -248,6 +248,7 @@ public class RdpcClient {
     builder.launchDir(params.getLaunchDir());
     builder.projectDir(params.getProjectDir());
     builder.workDir(params.getWorkDir());
+    builder.resume(params.getResume());
     return builder.build();
   }
 }

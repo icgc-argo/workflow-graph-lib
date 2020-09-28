@@ -15,9 +15,6 @@ class RdpcClientTest {
   public void TestWorkflowStatus() {
     val rdpcClient = new RdpcClient(rdpcUrl);
     log.info(
-        rdpcClient
-            .getWorkflowStatus("fill me in!")
-            .doOnNext(s -> System.out.println(s))
-            .block());
+        rdpcClient.getWorkflowStatus("fill me in!").doOnNext(s -> System.out.println(s)).block());
   }
 }
