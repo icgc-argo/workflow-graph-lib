@@ -12,10 +12,10 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: maven
+  - name: graal
     command: ['cat']
     tty: true
-    image: maven:3.6.3-openjdk-11
+    image: icgcargo/graalvm:java11-20.2.0
 """
         }
     }
@@ -32,8 +32,8 @@ spec:
         }
         stage('Test') {
             steps {
-                container('maven') {
-                    sh "mvn test"
+                container('graal') {
+                    sh "./mvnw test"
                 }
             }
         }
@@ -45,10 +45,10 @@ spec:
                 }
             }
             steps {
-                container('maven') {
+                container('graal') {
                     configFileProvider(
                         [configFile(fileId: '894c5ba8-e7cf-4465-98d4-b213eeaa77ef', variable: 'MAVEN_SETTINGS')]) {
-                        sh 'mvn -s $MAVEN_SETTINGS clean package deploy'
+                        sh './mvnw -s $MAVEN_SETTINGS clean package deploy'
                     }
                 }
             }

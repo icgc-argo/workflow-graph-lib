@@ -6,10 +6,15 @@ import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLangu
 import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
 import java.util.Map;
+import lombok.val;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage;
+import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionException;
+import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionUnsupportedLanguageException;
+import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionValueException;
 import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
 
 /**
@@ -29,22 +34,35 @@ public class Polyglot {
    *     the user defined function
    * @return generic value type returned by user function
    */
-  public static Value runMainFunctionWithData(
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object> runMainFunctionWithData(
       final GraphFunctionLanguage language,
       final String scriptContent,
       final Map<String, Object> data) {
-    return PatternMatch.<GraphFunctionLanguage, Value>match(language)
-        .on(
-            lang -> lang.equals(GraphFunctionLanguage.JS),
-            () -> runJsScript(format("function main(data) { %s }", scriptContent), data))
-        .on(
-            lang -> lang.equals(GraphFunctionLanguage.PYTHON),
-            () -> runPythonScript(format("def main(data):\n    %s", scriptContent), data))
-        .otherwise(
-            () -> {
-              throw new UnsupportedOperationException(
-                  format("Operation %s is not supported", language));
-            });
+    try {
+      val returnValue =
+          PatternMatch.<GraphFunctionLanguage, Value>match(language)
+              .on(
+                  lang -> lang.equals(GraphFunctionLanguage.JS),
+                  () -> runJsScript(format("function main(data) { %s }", scriptContent), data))
+              .on(
+                  lang -> lang.equals(GraphFunctionLanguage.PYTHON),
+                  () -> runPythonScript(format("def main(data):\n    %s", scriptContent), data))
+              .otherwise(
+                  () -> {
+                    throw new GraphFunctionUnsupportedLanguageException(
+                        format("Operation %s is not supported", language));
+                  });
+
+      return (Map<String, Object>) returnValue.as(Map.class);
+    } catch (PolyglotException ex) {
+      throw new GraphFunctionException(ex.getLocalizedMessage());
+    } catch (IllegalStateException | ClassCastException ex) {
+      throw new GraphFunctionValueException(
+          format(
+              "Unable to convert returned value to Map<String, Object>: %s",
+              ex.getLocalizedMessage()));
+    }
   }
 
   /**
@@ -57,7 +75,7 @@ public class Polyglot {
    *     passed as the single argument for the user defined function
    * @return generic value type returned by user function
    */
-  public static Value runMainFunctionWithData(
+  public static Map<String, Object> runMainFunctionWithData(
       final GraphFunctionLanguage language, final String scriptContent, final String data) {
     return runMainFunctionWithData(language, scriptContent, toMap(data));
   }
@@ -72,22 +90,33 @@ public class Polyglot {
    *     data object (object in JS, dictionary in python) inside expression context
    * @return result of evaluate boolean expression
    */
-  public static Value evaluateBooleanExpression(
+  public static Boolean evaluateBooleanExpression(
       final GraphFunctionLanguage language,
       final String expression,
       final Map<String, Object> data) {
-    return PatternMatch.<GraphFunctionLanguage, Value>match(language)
-        .on(
-            lang -> lang.equals(JS),
-            () -> runJsScript(format("function main(data) { return %s; }", expression), data))
-        .on(
-            lang -> lang.equals(PYTHON),
-            () -> runPythonScript(format("def main(data):\n    return %s", expression), data))
-        .otherwise(
-            () -> {
-              throw new UnsupportedOperationException(
-                  format("Operation %s is not supported", language));
-            });
+    try {
+      val returnValue =
+          PatternMatch.<GraphFunctionLanguage, Value>match(language)
+              .on(
+                  lang -> lang.equals(JS),
+                  () -> runJsScript(format("function main(data) { return %s; }", expression), data))
+              .on(
+                  lang -> lang.equals(PYTHON),
+                  () -> runPythonScript(format("def main(data):\n    return %s", expression), data))
+              .otherwise(
+                  () -> {
+                    throw new GraphFunctionValueException(
+                        format("Operation %s is not supported", language));
+                  });
+
+      if (!returnValue.isBoolean()) {
+        throw new GraphFunctionValueException("Return value must be of boolean type");
+      }
+
+      return returnValue.asBoolean();
+    } catch (PolyglotException ex) {
+      throw new GraphFunctionException(ex.getLocalizedMessage());
+    }
   }
 
   /**
@@ -101,7 +130,7 @@ public class Polyglot {
    *     expression context
    * @return result of evaluate boolean expression
    */
-  public static Value evaluateBooleanExpression(
+  public static Boolean evaluateBooleanExpression(
       final GraphFunctionLanguage language, final String expression, final String data) {
     return evaluateBooleanExpression(language, expression, toMap(data));
   }
@@ -120,8 +149,8 @@ public class Polyglot {
       final String languageId,
       final String scriptFileName,
       final String script,
-      final Map<String, Object> eventMap) {
-    NestedProxyObject eventMapProxy = new NestedProxyObject(eventMap);
+      final Map<String, Object> data) {
+    NestedProxyObject eventMapProxy = new NestedProxyObject(data);
     final Source source = Source.newBuilder(language, script, scriptFileName).buildLiteral();
     ctx.eval(source);
     return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
