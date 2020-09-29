@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.icgc_argo</groupId>
         <artifactId>workflow-graph-parent-pom</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
     </parent>
 
     <artifactId>workflow-graph-lib</artifactId>
@@ -43,12 +43,6 @@
         <developerConnection>scm:git:ssh://github.com:icgc-argo/workflow-graph-lib.git</developerConnection>
         <url>https://github.com/icgc-argo/workflow-graph-lib/tree/master</url>
     </scm>
-
-
-    <properties>
-        <java.version>11</java.version>
-        <avro.version>1.10.0</avro.version>
-    </properties>
 
     <dependencies>
 
@@ -105,7 +99,6 @@
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
-            <version>${avro.version}</version>
         </dependency>
     </dependencies>
 
@@ -121,7 +114,6 @@
             <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
-                <version>${avro.version}</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
@@ -140,7 +132,6 @@
             <plugin>
                 <groupId>com.github.sparow199</groupId>
                 <artifactId>apollo-client-maven-plugin</artifactId>
-                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -148,7 +139,8 @@
                         </goals>
                         <configuration>
                             <rootPackageName>org.icgc_argo.workflow_graph_lib.graphql.client</rootPackageName>
-                            <introspectionFile>${project.basedir}/src/main/resources/graphql/schema.json</introspectionFile>
+                            <introspectionFile>${project.basedir}/src/main/resources/graphql/schema.json
+                            </introspectionFile>
                             <sourceDirName>${project.basedir}/src/main/resources/graphql</sourceDirName>
                         </configuration>
                     </execution>
