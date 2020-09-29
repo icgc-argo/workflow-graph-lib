@@ -1,10 +1,18 @@
 package org.icgc_argo.workflow_graph_lib.workflow.client;
 
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
+
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.ApolloClient;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -31,15 +39,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 
 @Slf4j
 public class RdpcClient {
@@ -468,6 +467,14 @@ public class RdpcClient {
                     }));
   }
 
+  /**
+   * Execute a dynamic GQL query with a GraphEvent that is flattened and made available as query
+   * vars
+   *
+   * @param query The dynamic query to execute
+   * @param event The event that will be flattened and made available to the query as query vars
+   * @return Returns a Mono with the query response
+   */
   public Mono<Map<String, Object>> simpleQueryWithEvent(String query, GraphEvent event) {
     val data = RecordToFlattenedMap.from(event);
 

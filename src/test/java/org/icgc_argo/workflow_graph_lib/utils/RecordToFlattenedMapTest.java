@@ -1,15 +1,14 @@
 package org.icgc_argo.workflow_graph_lib.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
 import lombok.val;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RecordToFlattenedMapTest {
   private static GenericData.Record testRecord;
