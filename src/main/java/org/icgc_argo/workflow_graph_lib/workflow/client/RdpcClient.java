@@ -43,6 +43,14 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 public class RdpcClient {
 
+  // Exception Messages
+  private static final String EX_BAD_REQUEST = "Bad Request talking to API.";
+  private static final String EX_NOT_AUTHENTICATED = "Not Authenticated to talk to API.";
+  private static final String EX_NOT_AUTHORIZED = "Not Authorized to talk to API.";
+  private static final String EX_MUTATION_CONFLICT = "Conflict trying to mutate.";
+  private static final String EX_4XX_ERROR = "API throwing 4xx error.";
+  private static final String EX_5XX_ERROR = "API throwing 5xx error.";
+
   /** State */
   private final ApolloClient client;
 
@@ -72,15 +80,15 @@ public class RdpcClient {
       log.trace("ApolloHttpException thrown... checking status code");
       val errorCode = ((ApolloHttpException) e).code();
       if (errorCode == 400) {
-        sinkError(sink, "Bad Request talking to API.", DeadLetterQueueableException.class);
+        sinkError(sink, EX_BAD_REQUEST, DeadLetterQueueableException.class);
       } else if (errorCode == 401) {
-        sinkError(sink, "Not Authenticated to talk to API.", RequeueableException.class);
+        sinkError(sink, EX_NOT_AUTHENTICATED, RequeueableException.class);
       } else if (errorCode == 403) {
-        sinkError(sink, "Not Authorized to talk to API.", RequeueableException.class);
+        sinkError(sink, EX_NOT_AUTHORIZED, RequeueableException.class);
       } else if (errorCode == 409) {
-        sinkError(sink, "Conflict trying to mutate.", DeadLetterQueueableException.class);
+        sinkError(sink, EX_MUTATION_CONFLICT, DeadLetterQueueableException.class);
       } else if (errorCode >= 500) {
-        sinkError(sink, "API throwing 5xx error.", RequeueableException.class);
+        sinkError(sink, EX_5XX_ERROR, RequeueableException.class);
       }
     } else {
       // Not HTTP Exception, DLQ it.
@@ -467,24 +475,29 @@ public class RdpcClient {
         .body(BodyInserters.fromValue(new SimpleQuery(query, data)))
         .retrieve()
         .onRawStatus(
+            status -> status == 400,
+            clientResponse -> {
+              throw new DeadLetterQueueableException(EX_BAD_REQUEST);
+            })
+        .onRawStatus(
             status -> status == 401,
             clientResponse -> {
-              throw new RequeueableException("Not Authenticated to talk to API.");
+              throw new RequeueableException(EX_NOT_AUTHENTICATED);
             })
         .onRawStatus(
             status -> status == 403,
             clientResponse -> {
-              throw new RequeueableException("Not Authorized to talk to API.");
+              throw new RequeueableException(EX_NOT_AUTHORIZED);
             })
         .onStatus(
             HttpStatus::is4xxClientError,
             clientResponse -> {
-              throw new DeadLetterQueueableException("API throwing 4xx error.");
+              throw new DeadLetterQueueableException(EX_4XX_ERROR);
             })
         .onStatus(
             HttpStatus::is5xxServerError,
             clientResponse -> {
-              throw new RequeueableException("API throwing 5xx error.");
+              throw new RequeueableException(EX_5XX_ERROR);
             })
         .bodyToMono(new ParameterizedTypeReference<>() {});
   }
