@@ -20,6 +20,7 @@ import org.icgc_argo.workflow_graph_lib.graphql.client.fragment.AnalysisDetailsF
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
+import org.icgc_argo.workflow_graph_lib.utils.RecordToFlattenedMap;
 import org.icgc_argo.workflow_graph_lib.workflow.model.RunRequest;
 import org.icgc_argo.workflow_graph_lib.workflow.model.SimpleQuery;
 import org.jetbrains.annotations.NotNull;
@@ -467,7 +468,9 @@ public class RdpcClient {
                     }));
   }
 
-  public Mono<Map<String, Object>> simpleQuery(String query, Map<String, Object> data) {
+  public Mono<Map<String, Object>> simpleQueryWithEvent(String query, GraphEvent event) {
+    val data = RecordToFlattenedMap.from(event);
+
     return WebClient.create()
         .post()
         .uri(client.getServerUrl().uri())
