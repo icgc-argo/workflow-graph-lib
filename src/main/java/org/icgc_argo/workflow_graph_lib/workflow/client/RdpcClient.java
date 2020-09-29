@@ -9,6 +9,7 @@ import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,9 @@ import org.icgc_argo.workflow_graph_lib.exceptions.GraphException;
 import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
 import org.icgc_argo.workflow_graph_lib.graphql.client.GetAnalysisForGraphEventQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.GetWorkflowStateQuery;
+import org.icgc_argo.workflow_graph_lib.graphql.client.PublishedAnalysesForGraphEventQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.StartRunMutation;
+import org.icgc_argo.workflow_graph_lib.graphql.client.fragment.AnalysisDetailsForGraphEvent;
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
@@ -202,7 +205,10 @@ public class RdpcClient {
                                                     .findFirst()
                                                     .ifPresentOrElse(
                                                         analysis ->
-                                                            analysisToGraphEventConverter(analysis)
+                                                            analysisToGraphEventConverter(
+                                                                    analysis
+                                                                        .getFragments()
+                                                                        .getAnalysisDetailsForGraphEvent())
                                                                 .ifPresentOrElse(
                                                                     sink::success,
                                                                     () ->
@@ -227,6 +233,82 @@ public class RdpcClient {
                                     sinkError(
                                         sink,
                                         format("Analysis %s not found.", analysisId),
+                                        RequeueableException.class));
+                      }
+
+                      @Override
+                      public void onFailure(@NotNull ApolloException e) {
+                        log.trace("ApolloException thrown");
+                        handleApolloException(sink, e);
+                      }
+                    }));
+  }
+
+  /**
+   * Get the status of a workflow
+   *
+   * @param runId The runId of the workflow as a String
+   * @return Returns a Mono of the state of the workflow
+   */
+  public Mono<List<GraphEvent>> createGraphEventsForRun(String runId) {
+    return Mono.create(
+        sink ->
+            client
+                .query(new PublishedAnalysesForGraphEventQuery(runId))
+                .enqueue(
+                    new ApolloCall.Callback<>() {
+                      @Override
+                      public void onResponse(
+                          @NotNull
+                              Response<Optional<PublishedAnalysesForGraphEventQuery.Data>>
+                                  response) {
+                        response
+                            .getData()
+                            .ifPresentOrElse(
+                                data ->
+                                    data.getRuns()
+                                        .ifPresentOrElse(
+                                            runs ->
+                                                runs.stream()
+                                                    .findFirst()
+                                                    .ifPresentOrElse(
+                                                        run ->
+                                                            run.getProducedAnalyses()
+                                                                .ifPresentOrElse(
+                                                                    producedAnalyses ->
+                                                                        sink.success(
+                                                                            producedAnalyses
+                                                                                .stream()
+                                                                                .map(
+                                                                                    producedAnalyse ->
+                                                                                        analysisToGraphEventConverter(
+                                                                                            producedAnalyse
+                                                                                                .getFragments()
+                                                                                                .getAnalysisDetailsForGraphEvent()))
+                                                                                .map(Optional::get)
+                                                                                .collect(toList())),
+                                                                    () ->
+                                                                        sinkError(
+                                                                            sink,
+                                                                            format(
+                                                                                "No produced analyses for run %s.",
+                                                                                runId),
+                                                                            DeadLetterQueueableException
+                                                                                .class)),
+                                                        () ->
+                                                            sinkError(
+                                                                sink,
+                                                                format("Run %s not found.", runId),
+                                                                RequeueableException.class)),
+                                            () ->
+                                                sinkError(
+                                                    sink,
+                                                    format("Run %s not found.", runId),
+                                                    RequeueableException.class)),
+                                () ->
+                                    sinkError(
+                                        sink,
+                                        format("Run %s not found.", runId),
                                         RequeueableException.class));
                       }
 
@@ -290,7 +372,7 @@ public class RdpcClient {
    * Puts exception on Mono sink with logging and correct type of exception.
    *
    * @param sink Sink corresponding to the Mono published by client.
-   * @param nestedException Nexted exception
+   * @param nestedException Nested exception
    * @param exceptionType Type of GraphException
    */
   private static void sinkError(
@@ -330,7 +412,7 @@ public class RdpcClient {
    * @return GraphEvent defined by GraphEvent.avsc avro schema
    */
   private static Optional<GraphEvent> analysisToGraphEventConverter(
-      GetAnalysisForGraphEventQuery.Analysis analysis) {
+      AnalysisDetailsForGraphEvent analysis) {
 
     // short circuit if can't build GraphEvent
     if (analysis == null
@@ -345,7 +427,7 @@ public class RdpcClient {
             .map(d -> d.getDonorId().orElse(""))
             .collect(toList());
 
-   String experimentalStrategy = "";
+    String experimentalStrategy = "";
     try {
       val experiment =
           (Map<String, Object>) analysis.getExperiment().orElseGet(Collections::emptyMap);

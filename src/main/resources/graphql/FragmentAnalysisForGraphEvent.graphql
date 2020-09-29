@@ -1,0 +1,13 @@
+fragment analysisDetailsForGraphEvent on Analysis {
+    analysisId
+    studyId
+    analysisType
+    analysisState
+    experiment
+    donors{
+      donorId
+    }
+    files {
+        dataType
+    }
+}
