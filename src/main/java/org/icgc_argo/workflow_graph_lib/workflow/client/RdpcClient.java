@@ -28,13 +28,28 @@ import org.icgc_argo.workflow_graph_lib.graphql.client.fragment.AnalysisDetailsF
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
+import org.icgc_argo.workflow_graph_lib.utils.RecordToFlattenedMap;
 import org.icgc_argo.workflow_graph_lib.workflow.model.RunRequest;
+import org.icgc_argo.workflow_graph_lib.workflow.model.SimpleQuery;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 @Slf4j
 public class RdpcClient {
+
+  // Exception Messages
+  private static final String EX_BAD_REQUEST = "Bad Request talking to API.";
+  private static final String EX_NOT_AUTHENTICATED = "Not Authenticated to talk to API.";
+  private static final String EX_NOT_AUTHORIZED = "Not Authorized to talk to API.";
+  private static final String EX_MUTATION_CONFLICT = "Conflict trying to mutate.";
+  private static final String EX_4XX_ERROR = "API throwing 4xx error.";
+  private static final String EX_5XX_ERROR = "API throwing 5xx error.";
 
   /** State */
   private final ApolloClient client;
@@ -51,6 +66,138 @@ public class RdpcClient {
     okHttpBuilder.writeTimeout(timeout, TimeUnit.SECONDS);
 
     this.client = ApolloClient.builder().serverUrl(url).okHttpClient(okHttpBuilder.build()).build();
+  }
+
+  /**
+   * Handles ApolloException on the failure callback. This is where we can transform HTTP status
+   * codes into exceptions.
+   *
+   * @param sink Sink corresponding to the Mono being published by client.
+   * @param e ApolloException that may actually be an ApolloHttpException.
+   */
+  private static void handleApolloException(MonoSink<?> sink, ApolloException e) {
+    if (e instanceof ApolloHttpException) {
+      log.trace("ApolloHttpException thrown... checking status code");
+      val errorCode = ((ApolloHttpException) e).code();
+      if (errorCode == 400) {
+        sinkError(sink, EX_BAD_REQUEST, DeadLetterQueueableException.class);
+      } else if (errorCode == 401) {
+        sinkError(sink, EX_NOT_AUTHENTICATED, RequeueableException.class);
+      } else if (errorCode == 403) {
+        sinkError(sink, EX_NOT_AUTHORIZED, RequeueableException.class);
+      } else if (errorCode == 409) {
+        sinkError(sink, EX_MUTATION_CONFLICT, DeadLetterQueueableException.class);
+      } else if (errorCode >= 500) {
+        sinkError(sink, EX_5XX_ERROR, RequeueableException.class);
+      }
+    } else {
+      // Not HTTP Exception, DLQ it.
+      log.trace("ApolloException thrown");
+      sinkError(sink, e, DeadLetterQueueableException.class);
+    }
+  }
+
+  /**
+   * Puts exception on Mono sink with logging and correct type of exception.
+   *
+   * @param sink Sink corresponding to the Mono published by client.
+   * @param message String message for log and exception
+   * @param exceptionType Type of GraphException
+   */
+  private static void sinkError(
+      MonoSink<?> sink, String message, Class<? extends GraphException> exceptionType) {
+    try {
+      val exception = exceptionType.getDeclaredConstructor(String.class).newInstance(message);
+      log.error(message);
+      sink.error(exception);
+    } catch (Exception e) {
+      log.error("Something happened trying to map exception type.");
+      throw new DeadLetterQueueableException(e);
+    }
+  }
+
+  /**
+   * Puts exception on Mono sink with logging and correct type of exception.
+   *
+   * @param sink Sink corresponding to the Mono published by client.
+   * @param nestedException Nested exception
+   * @param exceptionType Type of GraphException
+   */
+  private static void sinkError(
+      MonoSink<?> sink, Exception nestedException, Class<? extends GraphException> exceptionType) {
+    try {
+      log.error("Encountered nested exception: {}", nestedException.getMessage());
+      val exception =
+          exceptionType.getDeclaredConstructor(Exception.class).newInstance(nestedException);
+      sink.error(exception);
+    } catch (Exception e) {
+      log.error("Something happened trying to map exception type.");
+      throw new DeadLetterQueueableException(e);
+    }
+  }
+
+  /**
+   * Adapter to convert between Models of workflow engine params for use with apollo
+   *
+   * @param params WorkflowEngineParams model owned by developer
+   * @return WorkflowEngineParams model owned by Apollo code gen
+   */
+  private static WorkflowEngineParams engineParamsAdapter(
+      @NonNull org.icgc_argo.workflow_graph_lib.workflow.model.WorkflowEngineParams params) {
+    val builder = WorkflowEngineParams.builder();
+    builder.revision(params.getRevision());
+    builder.launchDir(params.getLaunchDir());
+    builder.projectDir(params.getProjectDir());
+    builder.workDir(params.getWorkDir());
+    builder.resume(params.getResume());
+    return builder.build();
+  }
+
+  /**
+   * Converter to convert analysis to GraphEvent
+   *
+   * @param analysis Analysis from query
+   * @return GraphEvent defined by GraphEvent.avsc avro schema
+   */
+  private static Optional<GraphEvent> analysisToGraphEventConverter(
+      AnalysisDetailsForGraphEvent analysis) {
+
+    // short circuit if can't build GraphEvent
+    if (analysis == null
+        || analysis.getStudyId().isEmpty()
+        || analysis.getAnalysisState().isEmpty()
+        || analysis.getAnalysisType().isEmpty()) {
+      return Optional.empty();
+    }
+
+    val donorIds =
+        analysis.getDonors().orElseGet(Collections::emptyList).stream()
+            .map(d -> d.getDonorId().orElse(""))
+            .collect(toList());
+
+    String experimentalStrategy = "";
+    try {
+      val experiment =
+          (Map<String, Object>) analysis.getExperiment().orElseGet(Collections::emptyMap);
+      experimentalStrategy = experiment.getOrDefault("experimental_strategy", "").toString();
+    } catch (Exception e) {
+      log.error("Experiment is not map", e);
+    }
+
+    val files =
+        analysis.getFiles().orElseGet(Collections::emptyList).stream()
+            .map(f -> new AnalysisFile(f.getDataType().orElse("")))
+            .collect(toList());
+
+    return Optional.of(
+        new GraphEvent(
+            analysis.getAnalysisId(),
+            analysis.getAnalysisState().get().toString(),
+            analysis.getAnalysisType().get(),
+            analysis.getStudyId().get(),
+            experimentalStrategy,
+            donorIds,
+            files));
   }
 
   /**
@@ -321,134 +468,47 @@ public class RdpcClient {
   }
 
   /**
-   * Handles ApolloException on the failure callback. This is where we can transform HTTP status
-   * codes into exceptions.
+   * Execute a dynamic GQL query with a GraphEvent that is flattened and made available as query
+   * vars
    *
-   * @param sink Sink corresponding to the Mono being published by client.
-   * @param e ApolloException that may actually be an ApolloHttpException.
+   * @param query The dynamic query to execute
+   * @param event The event that will be flattened and made available to the query as query vars
+   * @return Returns a Mono with the query response
    */
-  private static void handleApolloException(MonoSink<?> sink, ApolloException e) {
-    if (e instanceof ApolloHttpException) {
-      log.trace("ApolloHttpException thrown... checking status code");
-      val errorCode = ((ApolloHttpException) e).code();
-      if (errorCode == 400) {
-        sinkError(sink, "Bad Request talking to API.", DeadLetterQueueableException.class);
-      } else if (errorCode == 401) {
-        sinkError(sink, "Not Authenticated to talk to API.", RequeueableException.class);
-      } else if (errorCode == 403) {
-        sinkError(sink, "Not Authorized to talk to API.", RequeueableException.class);
-      } else if (errorCode == 409) {
-        sinkError(sink, "Conflict trying to mutate.", DeadLetterQueueableException.class);
-      } else if (errorCode >= 500) {
-        sinkError(sink, "API throwing 5xx error.", RequeueableException.class);
-      }
-    } else {
-      // Not HTTP Exception, DLQ it.
-      log.trace("ApolloException thrown");
-      sinkError(sink, e, DeadLetterQueueableException.class);
-    }
-  }
+  public Mono<Map<String, Object>> simpleQueryWithEvent(String query, GraphEvent event) {
+    val data = RecordToFlattenedMap.from(event);
 
-  /**
-   * Puts exception on Mono sink with logging and correct type of exception.
-   *
-   * @param sink Sink corresponding to the Mono published by client.
-   * @param message String message for log and exception
-   * @param exceptionType Type of GraphException
-   */
-  private static void sinkError(
-      MonoSink<?> sink, String message, Class<? extends GraphException> exceptionType) {
-    try {
-      val exception = exceptionType.getDeclaredConstructor(String.class).newInstance(message);
-      log.error(message);
-      sink.error(exception);
-    } catch (Exception e) {
-      log.error("Something happened trying to map exception type.");
-      throw new DeadLetterQueueableException(e);
-    }
-  }
-
-  /**
-   * Puts exception on Mono sink with logging and correct type of exception.
-   *
-   * @param sink Sink corresponding to the Mono published by client.
-   * @param nestedException Nested exception
-   * @param exceptionType Type of GraphException
-   */
-  private static void sinkError(
-      MonoSink<?> sink, Exception nestedException, Class<? extends GraphException> exceptionType) {
-    try {
-      log.error("Encountered nested exception: {}", nestedException.getMessage());
-      val exception =
-          exceptionType.getDeclaredConstructor(Exception.class).newInstance(nestedException);
-      sink.error(exception);
-    } catch (Exception e) {
-      log.error("Something happened trying to map exception type.");
-      throw new DeadLetterQueueableException(e);
-    }
-  }
-
-  /**
-   * Adapter to convert between Models of workflow engine params for use with apollo
-   *
-   * @param params WorkflowEngineParams model owned by developer
-   * @return WorkflowEngineParams model owned by Apollo code gen
-   */
-  private static WorkflowEngineParams engineParamsAdapter(
-      @NonNull org.icgc_argo.workflow_graph_lib.workflow.model.WorkflowEngineParams params) {
-    val builder = WorkflowEngineParams.builder();
-    builder.revision(params.getRevision());
-    builder.launchDir(params.getLaunchDir());
-    builder.projectDir(params.getProjectDir());
-    builder.workDir(params.getWorkDir());
-    builder.resume(params.getResume());
-    return builder.build();
-  }
-
-  /**
-   * Converter to convert analysis to GraphEvent
-   *
-   * @param analysis Analysis from query
-   * @return GraphEvent defined by GraphEvent.avsc avro schema
-   */
-  private static Optional<GraphEvent> analysisToGraphEventConverter(
-      AnalysisDetailsForGraphEvent analysis) {
-
-    // short circuit if can't build GraphEvent
-    if (analysis == null
-        || analysis.getStudyId().isEmpty()
-        || analysis.getAnalysisState().isEmpty()
-        || analysis.getAnalysisType().isEmpty()) {
-      return Optional.empty();
-    }
-
-    val donorIds =
-        analysis.getDonors().orElseGet(Collections::emptyList).stream()
-            .map(d -> d.getDonorId().orElse(""))
-            .collect(toList());
-
-    String experimentalStrategy = "";
-    try {
-      val experiment =
-          (Map<String, Object>) analysis.getExperiment().orElseGet(Collections::emptyMap);
-      experimentalStrategy = experiment.getOrDefault("experimental_strategy", "").toString();
-    } catch (Exception e) {
-      log.error("Experiment is not map", e);
-    }
-
-    val files =
-        analysis.getFiles().orElseGet(Collections::emptyList).stream()
-            .map(f -> new AnalysisFile(f.getDataType().orElse("")))
-            .collect(toList());
-
-    return Optional.of(
-        new GraphEvent(
-            analysis.getAnalysisId(),
-            analysis.getAnalysisState().get().toString(),
-            analysis.getAnalysisType().get(),
-            analysis.getStudyId().get(),
-            experimentalStrategy,
-            donorIds,
-            files));
+    return WebClient.create()
+        .post()
+        .uri(client.getServerUrl().uri())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromValue(new SimpleQuery(query, data)))
+        .retrieve()
+        .onRawStatus(
+            status -> status == 400,
+            clientResponse -> {
+              throw new DeadLetterQueueableException(EX_BAD_REQUEST);
+            })
+        .onRawStatus(
+            status -> status == 401,
+            clientResponse -> {
+              throw new RequeueableException(EX_NOT_AUTHENTICATED);
+            })
+        .onRawStatus(
+            status -> status == 403,
+            clientResponse -> {
+              throw new RequeueableException(EX_NOT_AUTHORIZED);
+            })
+        .onStatus(
+            HttpStatus::is4xxClientError,
+            clientResponse -> {
+              throw new DeadLetterQueueableException(EX_4XX_ERROR);
+            })
+        .onStatus(
+            HttpStatus::is5xxServerError,
+            clientResponse -> {
+              throw new RequeueableException(EX_5XX_ERROR);
+            })
+        .bodyToMono(new ParameterizedTypeReference<>() {});
   }
 }
