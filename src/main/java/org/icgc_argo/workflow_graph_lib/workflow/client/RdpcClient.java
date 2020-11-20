@@ -8,10 +8,7 @@ import com.apollographql.apollo.ApolloClient;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -191,6 +188,7 @@ public class RdpcClient {
 
     return Optional.of(
         new GraphEvent(
+            UUID.randomUUID().toString(),
             analysis.getAnalysisId(),
             analysis.getAnalysisState().get().toString(),
             analysis.getAnalysisType().get(),

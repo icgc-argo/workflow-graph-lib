@@ -13,11 +13,11 @@ import org.apache.avro.specific.SpecificData;
 @org.apache.avro.specific.AvroGenerated
 public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = 2389094890873110266L;
+  private static final long serialVersionUID = -7497127863358708963L;
   public static final org.apache.avro.Schema SCHEMA$ =
       new org.apache.avro.Schema.Parser()
           .parse(
-              "{\"type\":\"record\",\"name\":\"GraphEvent\",\"namespace\":\"org.icgc_argo.workflow_graph_lib.schema\",\"fields\":[{\"name\":\"analysisId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisState\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"studyId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"experimentalStrategy\",\"type\":[{\"type\":\"string\",\"avro.java.string\":\"String\"},\"null\"]},{\"name\":\"donorIds\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"files\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"AnalysisFile\",\"fields\":[{\"name\":\"dataType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}}}]}");
+              "{\"type\":\"record\",\"name\":\"GraphEvent\",\"namespace\":\"org.icgc_argo.workflow_graph_lib.schema\",\"fields\":[{\"name\":\"id\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"},\"logicalType\":\"UUID\"},{\"name\":\"analysisId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisState\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"studyId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"experimentalStrategy\",\"type\":[{\"type\":\"string\",\"avro.java.string\":\"String\"},\"null\"]},{\"name\":\"donorIds\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"files\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"AnalysisFile\",\"fields\":[{\"name\":\"dataType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}}}]}");
 
   public static org.apache.avro.Schema getClassSchema() {
     return SCHEMA$;
@@ -82,6 +82,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     return DECODER.decode(b);
   }
 
+  private java.lang.String id;
   private java.lang.String analysisId;
   private java.lang.String analysisState;
   private java.lang.String analysisType;
@@ -99,6 +100,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   /**
    * All-args constructor.
    *
+   * @param id The new value for id
    * @param analysisId The new value for analysisId
    * @param analysisState The new value for analysisState
    * @param analysisType The new value for analysisType
@@ -108,6 +110,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
    * @param files The new value for files
    */
   public GraphEvent(
+      java.lang.String id,
       java.lang.String analysisId,
       java.lang.String analysisState,
       java.lang.String analysisType,
@@ -115,6 +118,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
       java.lang.String experimentalStrategy,
       java.util.List<java.lang.String> donorIds,
       java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile> files) {
+    this.id = id;
     this.analysisId = analysisId;
     this.analysisState = analysisState;
     this.analysisType = analysisType;
@@ -135,18 +139,20 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   public java.lang.Object get(int field$) {
     switch (field$) {
       case 0:
-        return analysisId;
+        return id;
       case 1:
-        return analysisState;
+        return analysisId;
       case 2:
-        return analysisType;
+        return analysisState;
       case 3:
-        return studyId;
+        return analysisType;
       case 4:
-        return experimentalStrategy;
+        return studyId;
       case 5:
-        return donorIds;
+        return experimentalStrategy;
       case 6:
+        return donorIds;
+      case 7:
         return files;
       default:
         throw new IndexOutOfBoundsException("Invalid index: " + field$);
@@ -158,29 +164,50 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
       case 0:
-        analysisId = value$ != null ? value$.toString() : null;
+        id = value$ != null ? value$.toString() : null;
         break;
       case 1:
-        analysisState = value$ != null ? value$.toString() : null;
+        analysisId = value$ != null ? value$.toString() : null;
         break;
       case 2:
-        analysisType = value$ != null ? value$.toString() : null;
+        analysisState = value$ != null ? value$.toString() : null;
         break;
       case 3:
-        studyId = value$ != null ? value$.toString() : null;
+        analysisType = value$ != null ? value$.toString() : null;
         break;
       case 4:
-        experimentalStrategy = value$ != null ? value$.toString() : null;
+        studyId = value$ != null ? value$.toString() : null;
         break;
       case 5:
-        donorIds = (java.util.List<java.lang.String>) value$;
+        experimentalStrategy = value$ != null ? value$.toString() : null;
         break;
       case 6:
+        donorIds = (java.util.List<java.lang.String>) value$;
+        break;
+      case 7:
         files = (java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile>) value$;
         break;
       default:
         throw new IndexOutOfBoundsException("Invalid index: " + field$);
     }
+  }
+
+  /**
+   * Gets the value of the 'id' field.
+   *
+   * @return The value of the 'id' field.
+   */
+  public java.lang.String getId() {
+    return id;
+  }
+
+  /**
+   * Sets the value of the 'id' field.
+   *
+   * @param value the value to set.
+   */
+  public void setId(java.lang.String value) {
+    this.id = value;
   }
 
   /**
@@ -353,6 +380,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<GraphEvent>
       implements org.apache.avro.data.RecordBuilder<GraphEvent> {
 
+    private java.lang.String id;
     private java.lang.String analysisId;
     private java.lang.String analysisState;
     private java.lang.String analysisType;
@@ -373,34 +401,38 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     private Builder(org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder other) {
       super(other);
-      if (isValidValue(fields()[0], other.analysisId)) {
-        this.analysisId = data().deepCopy(fields()[0].schema(), other.analysisId);
+      if (isValidValue(fields()[0], other.id)) {
+        this.id = data().deepCopy(fields()[0].schema(), other.id);
         fieldSetFlags()[0] = other.fieldSetFlags()[0];
       }
-      if (isValidValue(fields()[1], other.analysisState)) {
-        this.analysisState = data().deepCopy(fields()[1].schema(), other.analysisState);
+      if (isValidValue(fields()[1], other.analysisId)) {
+        this.analysisId = data().deepCopy(fields()[1].schema(), other.analysisId);
         fieldSetFlags()[1] = other.fieldSetFlags()[1];
       }
-      if (isValidValue(fields()[2], other.analysisType)) {
-        this.analysisType = data().deepCopy(fields()[2].schema(), other.analysisType);
+      if (isValidValue(fields()[2], other.analysisState)) {
+        this.analysisState = data().deepCopy(fields()[2].schema(), other.analysisState);
         fieldSetFlags()[2] = other.fieldSetFlags()[2];
       }
-      if (isValidValue(fields()[3], other.studyId)) {
-        this.studyId = data().deepCopy(fields()[3].schema(), other.studyId);
+      if (isValidValue(fields()[3], other.analysisType)) {
+        this.analysisType = data().deepCopy(fields()[3].schema(), other.analysisType);
         fieldSetFlags()[3] = other.fieldSetFlags()[3];
       }
-      if (isValidValue(fields()[4], other.experimentalStrategy)) {
-        this.experimentalStrategy =
-            data().deepCopy(fields()[4].schema(), other.experimentalStrategy);
+      if (isValidValue(fields()[4], other.studyId)) {
+        this.studyId = data().deepCopy(fields()[4].schema(), other.studyId);
         fieldSetFlags()[4] = other.fieldSetFlags()[4];
       }
-      if (isValidValue(fields()[5], other.donorIds)) {
-        this.donorIds = data().deepCopy(fields()[5].schema(), other.donorIds);
+      if (isValidValue(fields()[5], other.experimentalStrategy)) {
+        this.experimentalStrategy =
+            data().deepCopy(fields()[5].schema(), other.experimentalStrategy);
         fieldSetFlags()[5] = other.fieldSetFlags()[5];
       }
-      if (isValidValue(fields()[6], other.files)) {
-        this.files = data().deepCopy(fields()[6].schema(), other.files);
+      if (isValidValue(fields()[6], other.donorIds)) {
+        this.donorIds = data().deepCopy(fields()[6].schema(), other.donorIds);
         fieldSetFlags()[6] = other.fieldSetFlags()[6];
+      }
+      if (isValidValue(fields()[7], other.files)) {
+        this.files = data().deepCopy(fields()[7].schema(), other.files);
+        fieldSetFlags()[7] = other.fieldSetFlags()[7];
       }
     }
 
@@ -411,35 +443,82 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     private Builder(org.icgc_argo.workflow_graph_lib.schema.GraphEvent other) {
       super(SCHEMA$);
-      if (isValidValue(fields()[0], other.analysisId)) {
-        this.analysisId = data().deepCopy(fields()[0].schema(), other.analysisId);
+      if (isValidValue(fields()[0], other.id)) {
+        this.id = data().deepCopy(fields()[0].schema(), other.id);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.analysisState)) {
-        this.analysisState = data().deepCopy(fields()[1].schema(), other.analysisState);
+      if (isValidValue(fields()[1], other.analysisId)) {
+        this.analysisId = data().deepCopy(fields()[1].schema(), other.analysisId);
         fieldSetFlags()[1] = true;
       }
-      if (isValidValue(fields()[2], other.analysisType)) {
-        this.analysisType = data().deepCopy(fields()[2].schema(), other.analysisType);
+      if (isValidValue(fields()[2], other.analysisState)) {
+        this.analysisState = data().deepCopy(fields()[2].schema(), other.analysisState);
         fieldSetFlags()[2] = true;
       }
-      if (isValidValue(fields()[3], other.studyId)) {
-        this.studyId = data().deepCopy(fields()[3].schema(), other.studyId);
+      if (isValidValue(fields()[3], other.analysisType)) {
+        this.analysisType = data().deepCopy(fields()[3].schema(), other.analysisType);
         fieldSetFlags()[3] = true;
       }
-      if (isValidValue(fields()[4], other.experimentalStrategy)) {
-        this.experimentalStrategy =
-            data().deepCopy(fields()[4].schema(), other.experimentalStrategy);
+      if (isValidValue(fields()[4], other.studyId)) {
+        this.studyId = data().deepCopy(fields()[4].schema(), other.studyId);
         fieldSetFlags()[4] = true;
       }
-      if (isValidValue(fields()[5], other.donorIds)) {
-        this.donorIds = data().deepCopy(fields()[5].schema(), other.donorIds);
+      if (isValidValue(fields()[5], other.experimentalStrategy)) {
+        this.experimentalStrategy =
+            data().deepCopy(fields()[5].schema(), other.experimentalStrategy);
         fieldSetFlags()[5] = true;
       }
-      if (isValidValue(fields()[6], other.files)) {
-        this.files = data().deepCopy(fields()[6].schema(), other.files);
+      if (isValidValue(fields()[6], other.donorIds)) {
+        this.donorIds = data().deepCopy(fields()[6].schema(), other.donorIds);
         fieldSetFlags()[6] = true;
       }
+      if (isValidValue(fields()[7], other.files)) {
+        this.files = data().deepCopy(fields()[7].schema(), other.files);
+        fieldSetFlags()[7] = true;
+      }
+    }
+
+    /**
+     * Gets the value of the 'id' field.
+     *
+     * @return The value.
+     */
+    public java.lang.String getId() {
+      return id;
+    }
+
+    /**
+     * Sets the value of the 'id' field.
+     *
+     * @param value The value of 'id'.
+     * @return This builder.
+     */
+    public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setId(
+        java.lang.String value) {
+      validate(fields()[0], value);
+      this.id = value;
+      fieldSetFlags()[0] = true;
+      return this;
+    }
+
+    /**
+     * Checks whether the 'id' field has been set.
+     *
+     * @return True if the 'id' field has been set, false otherwise.
+     */
+    public boolean hasId() {
+      return fieldSetFlags()[0];
+    }
+
+    /**
+     * Clears the value of the 'id' field.
+     *
+     * @return This builder.
+     */
+    public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearId() {
+      id = null;
+      fieldSetFlags()[0] = false;
+      return this;
     }
 
     /**
@@ -459,9 +538,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setAnalysisId(
         java.lang.String value) {
-      validate(fields()[0], value);
+      validate(fields()[1], value);
       this.analysisId = value;
-      fieldSetFlags()[0] = true;
+      fieldSetFlags()[1] = true;
       return this;
     }
 
@@ -471,7 +550,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'analysisId' field has been set, false otherwise.
      */
     public boolean hasAnalysisId() {
-      return fieldSetFlags()[0];
+      return fieldSetFlags()[1];
     }
 
     /**
@@ -481,7 +560,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearAnalysisId() {
       analysisId = null;
-      fieldSetFlags()[0] = false;
+      fieldSetFlags()[1] = false;
       return this;
     }
 
@@ -502,9 +581,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setAnalysisState(
         java.lang.String value) {
-      validate(fields()[1], value);
+      validate(fields()[2], value);
       this.analysisState = value;
-      fieldSetFlags()[1] = true;
+      fieldSetFlags()[2] = true;
       return this;
     }
 
@@ -514,7 +593,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'analysisState' field has been set, false otherwise.
      */
     public boolean hasAnalysisState() {
-      return fieldSetFlags()[1];
+      return fieldSetFlags()[2];
     }
 
     /**
@@ -524,7 +603,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearAnalysisState() {
       analysisState = null;
-      fieldSetFlags()[1] = false;
+      fieldSetFlags()[2] = false;
       return this;
     }
 
@@ -545,9 +624,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setAnalysisType(
         java.lang.String value) {
-      validate(fields()[2], value);
+      validate(fields()[3], value);
       this.analysisType = value;
-      fieldSetFlags()[2] = true;
+      fieldSetFlags()[3] = true;
       return this;
     }
 
@@ -557,7 +636,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'analysisType' field has been set, false otherwise.
      */
     public boolean hasAnalysisType() {
-      return fieldSetFlags()[2];
+      return fieldSetFlags()[3];
     }
 
     /**
@@ -567,7 +646,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearAnalysisType() {
       analysisType = null;
-      fieldSetFlags()[2] = false;
+      fieldSetFlags()[3] = false;
       return this;
     }
 
@@ -588,9 +667,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setStudyId(
         java.lang.String value) {
-      validate(fields()[3], value);
+      validate(fields()[4], value);
       this.studyId = value;
-      fieldSetFlags()[3] = true;
+      fieldSetFlags()[4] = true;
       return this;
     }
 
@@ -600,7 +679,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'studyId' field has been set, false otherwise.
      */
     public boolean hasStudyId() {
-      return fieldSetFlags()[3];
+      return fieldSetFlags()[4];
     }
 
     /**
@@ -610,7 +689,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearStudyId() {
       studyId = null;
-      fieldSetFlags()[3] = false;
+      fieldSetFlags()[4] = false;
       return this;
     }
 
@@ -631,9 +710,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setExperimentalStrategy(
         java.lang.String value) {
-      validate(fields()[4], value);
+      validate(fields()[5], value);
       this.experimentalStrategy = value;
-      fieldSetFlags()[4] = true;
+      fieldSetFlags()[5] = true;
       return this;
     }
 
@@ -643,7 +722,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'experimentalStrategy' field has been set, false otherwise.
      */
     public boolean hasExperimentalStrategy() {
-      return fieldSetFlags()[4];
+      return fieldSetFlags()[5];
     }
 
     /**
@@ -653,7 +732,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearExperimentalStrategy() {
       experimentalStrategy = null;
-      fieldSetFlags()[4] = false;
+      fieldSetFlags()[5] = false;
       return this;
     }
 
@@ -674,9 +753,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setDonorIds(
         java.util.List<java.lang.String> value) {
-      validate(fields()[5], value);
+      validate(fields()[6], value);
       this.donorIds = value;
-      fieldSetFlags()[5] = true;
+      fieldSetFlags()[6] = true;
       return this;
     }
 
@@ -686,7 +765,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'donorIds' field has been set, false otherwise.
      */
     public boolean hasDonorIds() {
-      return fieldSetFlags()[5];
+      return fieldSetFlags()[6];
     }
 
     /**
@@ -696,7 +775,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearDonorIds() {
       donorIds = null;
-      fieldSetFlags()[5] = false;
+      fieldSetFlags()[6] = false;
       return this;
     }
 
@@ -717,9 +796,9 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setFiles(
         java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile> value) {
-      validate(fields()[6], value);
+      validate(fields()[7], value);
       this.files = value;
-      fieldSetFlags()[6] = true;
+      fieldSetFlags()[7] = true;
       return this;
     }
 
@@ -729,7 +808,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      * @return True if the 'files' field has been set, false otherwise.
      */
     public boolean hasFiles() {
-      return fieldSetFlags()[6];
+      return fieldSetFlags()[7];
     }
 
     /**
@@ -739,7 +818,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
      */
     public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearFiles() {
       files = null;
-      fieldSetFlags()[6] = false;
+      fieldSetFlags()[7] = false;
       return this;
     }
 
@@ -748,27 +827,28 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     public GraphEvent build() {
       try {
         GraphEvent record = new GraphEvent();
+        record.id = fieldSetFlags()[0] ? this.id : (java.lang.String) defaultValue(fields()[0]);
         record.analysisId =
-            fieldSetFlags()[0] ? this.analysisId : (java.lang.String) defaultValue(fields()[0]);
+            fieldSetFlags()[1] ? this.analysisId : (java.lang.String) defaultValue(fields()[1]);
         record.analysisState =
-            fieldSetFlags()[1] ? this.analysisState : (java.lang.String) defaultValue(fields()[1]);
+            fieldSetFlags()[2] ? this.analysisState : (java.lang.String) defaultValue(fields()[2]);
         record.analysisType =
-            fieldSetFlags()[2] ? this.analysisType : (java.lang.String) defaultValue(fields()[2]);
+            fieldSetFlags()[3] ? this.analysisType : (java.lang.String) defaultValue(fields()[3]);
         record.studyId =
-            fieldSetFlags()[3] ? this.studyId : (java.lang.String) defaultValue(fields()[3]);
+            fieldSetFlags()[4] ? this.studyId : (java.lang.String) defaultValue(fields()[4]);
         record.experimentalStrategy =
-            fieldSetFlags()[4]
-                ? this.experimentalStrategy
-                : (java.lang.String) defaultValue(fields()[4]);
-        record.donorIds =
             fieldSetFlags()[5]
-                ? this.donorIds
-                : (java.util.List<java.lang.String>) defaultValue(fields()[5]);
-        record.files =
+                ? this.experimentalStrategy
+                : (java.lang.String) defaultValue(fields()[5]);
+        record.donorIds =
             fieldSetFlags()[6]
+                ? this.donorIds
+                : (java.util.List<java.lang.String>) defaultValue(fields()[6]);
+        record.files =
+            fieldSetFlags()[7]
                 ? this.files
                 : (java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile>)
-                    defaultValue(fields()[6]);
+                    defaultValue(fields()[7]);
         return record;
       } catch (org.apache.avro.AvroMissingFieldException e) {
         throw e;
@@ -803,6 +883,8 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
 
   @Override
   public void customEncode(org.apache.avro.io.Encoder out) throws java.io.IOException {
+    out.writeString(this.id);
+
     out.writeString(this.analysisId);
 
     out.writeString(this.analysisState);
@@ -852,6 +934,8 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   public void customDecode(org.apache.avro.io.ResolvingDecoder in) throws java.io.IOException {
     org.apache.avro.Schema.Field[] fieldOrder = in.readFieldOrderIfDiff();
     if (fieldOrder == null) {
+      this.id = in.readString();
+
       this.analysisId = in.readString();
 
       this.analysisState = in.readString();
@@ -910,25 +994,29 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
       }
 
     } else {
-      for (int i = 0; i < 7; i++) {
+      for (int i = 0; i < 8; i++) {
         switch (fieldOrder[i].pos()) {
           case 0:
-            this.analysisId = in.readString();
+            this.id = in.readString();
             break;
 
           case 1:
-            this.analysisState = in.readString();
+            this.analysisId = in.readString();
             break;
 
           case 2:
-            this.analysisType = in.readString();
+            this.analysisState = in.readString();
             break;
 
           case 3:
-            this.studyId = in.readString();
+            this.analysisType = in.readString();
             break;
 
           case 4:
+            this.studyId = in.readString();
+            break;
+
+          case 5:
             if (in.readIndex() != 0) {
               in.readNull();
               this.experimentalStrategy = null;
@@ -937,7 +1025,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
             }
             break;
 
-          case 5:
+          case 6:
             long size0 = in.readArrayStart();
             java.util.List<java.lang.String> a0 = this.donorIds;
             if (a0 == null) {
@@ -959,7 +1047,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
             }
             break;
 
-          case 6:
+          case 7:
             long size1 = in.readArrayStart();
             java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile> a1 = this.files;
             if (a1 == null) {
