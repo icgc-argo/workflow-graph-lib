@@ -507,6 +507,11 @@ public class RdpcClient {
             clientResponse -> {
               throw new RequeueableException(EX_5XX_ERROR);
             })
-        .bodyToMono(new ParameterizedTypeReference<>() {});
+        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+        // onErrorMap catches thrown exceptions that are not GraphExceptions (e.g. NetworkTimeout,
+        // SSLException) and wraps them with DeadLetterQueueableException
+        .onErrorMap(
+            throwable -> !(throwable instanceof GraphException),
+            throwable -> new DeadLetterQueueableException(throwable.toString()));
   }
 }
