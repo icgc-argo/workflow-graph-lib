@@ -78,7 +78,8 @@ class SimpleQueryWithEventTests {
   @Test
   @SneakyThrows
   public void test_network_ssl_exception_handshake_timeout_is_DLQ() {
-    // Setup mockWebServer HTTPS/SSL config to generate "SSLException: handshake timeout" in Webclient
+    // Setup mockWebServer HTTPS/SSL config to generate "SSLException: handshake timeout" in
+    // Webclient
     val tunnelProxy = true;
     val sslSocketFactory = SSLContext.getDefault().getSocketFactory();
     mockWebServer.useHttps(sslSocketFactory, tunnelProxy);
