@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.ApolloClient;
+import com.apollographql.apollo.api.Error;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.apollographql.apollo.exception.ApolloHttpException;
@@ -26,6 +27,9 @@ import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
 import org.icgc_argo.workflow_graph_lib.utils.RecordToFlattenedMap;
+import org.icgc_argo.workflow_graph_lib.workflow.client.oauth.ClientCredentials;
+import org.icgc_argo.workflow_graph_lib.workflow.client.oauth.OAuthInterceptor;
+import org.icgc_argo.workflow_graph_lib.workflow.client.oauth.OAuthManager;
 import org.icgc_argo.workflow_graph_lib.workflow.model.RunRequest;
 import org.icgc_argo.workflow_graph_lib.workflow.model.SimpleQuery;
 import org.jetbrains.annotations.NotNull;
@@ -51,18 +55,39 @@ public class RdpcClient {
   /** State */
   private final ApolloClient client;
 
+  private OAuthManager oAuthManager;
+
   public RdpcClient(@NonNull String url) {
     this(url, 60);
   }
 
   public RdpcClient(@NonNull String url, long timeout) {
-    val okHttpBuilder = new OkHttpClient.Builder();
-    okHttpBuilder.connectTimeout(timeout, TimeUnit.SECONDS);
-    okHttpBuilder.callTimeout(timeout, TimeUnit.SECONDS);
-    okHttpBuilder.readTimeout(timeout, TimeUnit.SECONDS);
-    okHttpBuilder.writeTimeout(timeout, TimeUnit.SECONDS);
+    val okHttp =
+        new OkHttpClient.Builder()
+            .connectTimeout(timeout, TimeUnit.SECONDS)
+            .callTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(timeout, TimeUnit.SECONDS)
+            .build();
 
-    this.client = ApolloClient.builder().serverUrl(url).okHttpClient(okHttpBuilder.build()).build();
+    this.client = ApolloClient.builder().serverUrl(url).okHttpClient(okHttp).build();
+  }
+
+  public RdpcClient(
+      @NonNull String url, long timeout, @NonNull ClientCredentials clientCredentials) {
+    this.oAuthManager = new OAuthManager(clientCredentials);
+    val oauthInterceptor = new OAuthInterceptor(this.oAuthManager);
+
+    val okHttp =
+        new OkHttpClient.Builder()
+            .connectTimeout(timeout, TimeUnit.SECONDS)
+            .callTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(timeout, TimeUnit.SECONDS)
+            .addInterceptor(oauthInterceptor)
+            .build();
+
+    this.client = ApolloClient.builder().serverUrl(url).okHttpClient(okHttp).build();
   }
 
   /**
@@ -91,6 +116,21 @@ public class RdpcClient {
       // Not HTTP Exception, DLQ it.
       log.trace("ApolloException thrown");
       sinkError(sink, e, DeadLetterQueueableException.class);
+    }
+  }
+
+  /**
+   * Custom logic to handle graphQL specific errors that don't appear as HTTP Error Codes This is
+   * dirty as errors from GraphQL are not strongly typed.
+   */
+  private void handleGraphQLError(MonoSink<?> sink, Error error) {
+    if (error.getMessage().toLowerCase().contains("access")) {
+      sinkError(sink, EX_NOT_AUTHORIZED, RequeueableException.class);
+    } else {
+      sinkError(
+          sink,
+          format("Cannot handle error from GraphQL %s", error.getMessage()),
+          DeadLetterQueueableException.class);
     }
   }
 
@@ -223,30 +263,35 @@ public class RdpcClient {
                     @Override
                     public void onResponse(
                         @NotNull Response<Optional<StartRunMutation.Data>> response) {
-                      response
-                          .getData()
-                          .ifPresentOrElse(
-                              data ->
-                                  data.getStartRun()
-                                      .ifPresentOrElse(
-                                          startRun ->
-                                              startRun
-                                                  .getRunId()
-                                                  .ifPresentOrElse(
-                                                      sink::success,
-                                                      () ->
-                                                          sinkError(
-                                                              sink,
-                                                              "No runId Found in response.",
-                                                              DeadLetterQueueableException.class)),
-                                          () ->
-                                              sinkError(
-                                                  sink,
-                                                  "Empty Response from API.",
-                                                  RequeueableException.class)),
-                              () ->
-                                  sinkError(
-                                      sink, "No Response from API.", RequeueableException.class));
+                      if (response.hasErrors()) {
+                        handleGraphQLError(sink, response.getErrors().get(0));
+                      } else {
+                        response
+                            .getData()
+                            .ifPresentOrElse(
+                                data ->
+                                    data.getStartRun()
+                                        .ifPresentOrElse(
+                                            startRun ->
+                                                startRun
+                                                    .getRunId()
+                                                    .ifPresentOrElse(
+                                                        sink::success,
+                                                        () ->
+                                                            sinkError(
+                                                                sink,
+                                                                "No runId Found in response.",
+                                                                DeadLetterQueueableException
+                                                                    .class)),
+                                            () ->
+                                                sinkError(
+                                                    sink,
+                                                    "Empty Response from API.",
+                                                    RequeueableException.class)),
+                                () ->
+                                    sinkError(
+                                        sink, "No Response from API.", RequeueableException.class));
+                      }
                     }
 
                     @Override
@@ -274,43 +319,48 @@ public class RdpcClient {
                       @Override
                       public void onResponse(
                           @NotNull Response<Optional<GetWorkflowStateQuery.Data>> response) {
-                        response
-                            .getData()
-                            .ifPresentOrElse(
-                                data ->
-                                    data.getRuns()
-                                        .ifPresentOrElse(
-                                            runs ->
-                                                runs.stream()
-                                                    .findFirst()
-                                                    .ifPresentOrElse(
-                                                        run ->
-                                                            run.getState()
-                                                                .ifPresentOrElse(
-                                                                    sink::success,
-                                                                    () ->
-                                                                        sinkError(
-                                                                            sink,
-                                                                            format(
-                                                                                "Missing state for run %s.",
-                                                                                runId),
-                                                                            DeadLetterQueueableException
-                                                                                .class)),
-                                                        () ->
-                                                            sinkError(
-                                                                sink,
-                                                                format("Run %s not found.", runId),
-                                                                RequeueableException.class)),
-                                            () ->
-                                                sinkError(
-                                                    sink,
-                                                    format("Run %s not found.", runId),
-                                                    RequeueableException.class)),
-                                () ->
-                                    sinkError(
-                                        sink,
-                                        format("Run %s not found.", runId),
-                                        RequeueableException.class));
+                        if (response.hasErrors()) {
+                          handleGraphQLError(sink, response.getErrors().get(0));
+                        } else {
+                          response
+                              .getData()
+                              .ifPresentOrElse(
+                                  data ->
+                                      data.getRuns()
+                                          .ifPresentOrElse(
+                                              runs ->
+                                                  runs.stream()
+                                                      .findFirst()
+                                                      .ifPresentOrElse(
+                                                          run ->
+                                                              run.getState()
+                                                                  .ifPresentOrElse(
+                                                                      sink::success,
+                                                                      () ->
+                                                                          sinkError(
+                                                                              sink,
+                                                                              format(
+                                                                                  "Missing state for run %s.",
+                                                                                  runId),
+                                                                              DeadLetterQueueableException
+                                                                                  .class)),
+                                                          () ->
+                                                              sinkError(
+                                                                  sink,
+                                                                  format(
+                                                                      "Run %s not found.", runId),
+                                                                  RequeueableException.class)),
+                                              () ->
+                                                  sinkError(
+                                                      sink,
+                                                      format("Run %s not found.", runId),
+                                                      RequeueableException.class)),
+                                  () ->
+                                      sinkError(
+                                          sink,
+                                          format("Run %s not found.", runId),
+                                          RequeueableException.class));
+                        }
                       }
 
                       @Override
@@ -338,47 +388,50 @@ public class RdpcClient {
                       public void onResponse(
                           @NotNull
                               Response<Optional<GetAnalysisForGraphEventQuery.Data>> response) {
-
-                        response
-                            .getData()
-                            .ifPresentOrElse(
-                                data ->
-                                    data.getAnalyses()
-                                        .ifPresentOrElse(
-                                            analyses ->
-                                                analyses.stream()
-                                                    .findFirst()
-                                                    .ifPresentOrElse(
-                                                        analysis ->
-                                                            analysisToGraphEventConverter(
-                                                                    analysis
-                                                                        .getFragments()
-                                                                        .getAnalysisDetailsForGraphEvent())
-                                                                .ifPresentOrElse(
-                                                                    sink::success,
-                                                                    () ->
-                                                                        sinkError(
-                                                                            sink,
-                                                                            "Analysis couldn't be converted to GraphEvent",
-                                                                            DeadLetterQueueableException
-                                                                                .class)),
-                                                        () ->
-                                                            sinkError(
-                                                                sink,
-                                                                format(
-                                                                    "Analysis %s not found.",
-                                                                    analysisId),
-                                                                RequeueableException.class)),
-                                            () ->
-                                                sinkError(
-                                                    sink,
-                                                    format("Analysis %s not found.", analysisId),
-                                                    RequeueableException.class)),
-                                () ->
-                                    sinkError(
-                                        sink,
-                                        format("Analysis %s not found.", analysisId),
-                                        RequeueableException.class));
+                        if (response.hasErrors()) {
+                          handleGraphQLError(sink, response.getErrors().get(0));
+                        } else {
+                          response
+                              .getData()
+                              .ifPresentOrElse(
+                                  data ->
+                                      data.getAnalyses()
+                                          .ifPresentOrElse(
+                                              analyses ->
+                                                  analyses.stream()
+                                                      .findFirst()
+                                                      .ifPresentOrElse(
+                                                          analysis ->
+                                                              analysisToGraphEventConverter(
+                                                                      analysis
+                                                                          .getFragments()
+                                                                          .getAnalysisDetailsForGraphEvent())
+                                                                  .ifPresentOrElse(
+                                                                      sink::success,
+                                                                      () ->
+                                                                          sinkError(
+                                                                              sink,
+                                                                              "Analysis couldn't be converted to GraphEvent",
+                                                                              DeadLetterQueueableException
+                                                                                  .class)),
+                                                          () ->
+                                                              sinkError(
+                                                                  sink,
+                                                                  format(
+                                                                      "Analysis %s not found.",
+                                                                      analysisId),
+                                                                  RequeueableException.class)),
+                                              () ->
+                                                  sinkError(
+                                                      sink,
+                                                      format("Analysis %s not found.", analysisId),
+                                                      RequeueableException.class)),
+                                  () ->
+                                      sinkError(
+                                          sink,
+                                          format("Analysis %s not found.", analysisId),
+                                          RequeueableException.class));
+                        }
                       }
 
                       @Override
@@ -390,10 +443,9 @@ public class RdpcClient {
   }
 
   /**
-   * Get the status of a workflow
+   * Creates a GraphEvent from RunID
    *
    * @param runId The runId of the workflow as a String
-   * @return Returns a Mono of the state of the workflow
    */
   public Mono<List<GraphEvent>> createGraphEventsForRun(String runId) {
     return Mono.create(
@@ -407,54 +459,61 @@ public class RdpcClient {
                           @NotNull
                               Response<Optional<PublishedAnalysesForGraphEventQuery.Data>>
                                   response) {
-                        response
-                            .getData()
-                            .ifPresentOrElse(
-                                data ->
-                                    data.getRuns()
-                                        .ifPresentOrElse(
-                                            runs ->
-                                                runs.stream()
-                                                    .findFirst()
-                                                    .ifPresentOrElse(
-                                                        run ->
-                                                            run.getProducedAnalyses()
-                                                                .ifPresentOrElse(
-                                                                    producedAnalyses ->
-                                                                        sink.success(
-                                                                            producedAnalyses
-                                                                                .stream()
-                                                                                .map(
-                                                                                    producedAnalyse ->
-                                                                                        analysisToGraphEventConverter(
-                                                                                            producedAnalyse
-                                                                                                .getFragments()
-                                                                                                .getAnalysisDetailsForGraphEvent()))
-                                                                                .map(Optional::get)
-                                                                                .collect(toList())),
-                                                                    () ->
-                                                                        sinkError(
-                                                                            sink,
-                                                                            format(
-                                                                                "No produced analyses for run %s.",
-                                                                                runId),
-                                                                            DeadLetterQueueableException
-                                                                                .class)),
-                                                        () ->
-                                                            sinkError(
-                                                                sink,
-                                                                format("Run %s not found.", runId),
-                                                                RequeueableException.class)),
-                                            () ->
-                                                sinkError(
-                                                    sink,
-                                                    format("Run %s not found.", runId),
-                                                    RequeueableException.class)),
-                                () ->
-                                    sinkError(
-                                        sink,
-                                        format("Run %s not found.", runId),
-                                        RequeueableException.class));
+                        if (response.hasErrors()) {
+                          handleGraphQLError(sink, response.getErrors().get(0));
+                        } else {
+                          response
+                              .getData()
+                              .ifPresentOrElse(
+                                  data ->
+                                      data.getRuns()
+                                          .ifPresentOrElse(
+                                              runs ->
+                                                  runs.stream()
+                                                      .findFirst()
+                                                      .ifPresentOrElse(
+                                                          run ->
+                                                              run.getProducedAnalyses()
+                                                                  .ifPresentOrElse(
+                                                                      producedAnalyses ->
+                                                                          sink.success(
+                                                                              producedAnalyses
+                                                                                  .stream()
+                                                                                  .map(
+                                                                                      producedAnalyse ->
+                                                                                          analysisToGraphEventConverter(
+                                                                                              producedAnalyse
+                                                                                                  .getFragments()
+                                                                                                  .getAnalysisDetailsForGraphEvent()))
+                                                                                  .map(
+                                                                                      Optional::get)
+                                                                                  .collect(
+                                                                                      toList())),
+                                                                      () ->
+                                                                          sinkError(
+                                                                              sink,
+                                                                              format(
+                                                                                  "No produced analyses for run %s.",
+                                                                                  runId),
+                                                                              DeadLetterQueueableException
+                                                                                  .class)),
+                                                          () ->
+                                                              sinkError(
+                                                                  sink,
+                                                                  format(
+                                                                      "Run %s not found.", runId),
+                                                                  RequeueableException.class)),
+                                              () ->
+                                                  sinkError(
+                                                      sink,
+                                                      format("Run %s not found.", runId),
+                                                      RequeueableException.class)),
+                                  () ->
+                                      sinkError(
+                                          sink,
+                                          format("Run %s not found.", runId),
+                                          RequeueableException.class));
+                        }
                       }
 
                       @Override
@@ -480,6 +539,9 @@ public class RdpcClient {
         .post()
         .uri(client.getServerUrl().uri())
         .contentType(MediaType.APPLICATION_JSON)
+        .header(
+            "Authorization",
+            oAuthManager != null ? format("Bearer %s", oAuthManager.getToken()) : "")
         .body(BodyInserters.fromValue(new SimpleQuery(query, data)))
         .retrieve()
         .onRawStatus(
@@ -507,6 +569,11 @@ public class RdpcClient {
             clientResponse -> {
               throw new RequeueableException(EX_5XX_ERROR);
             })
-        .bodyToMono(new ParameterizedTypeReference<>() {});
+        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+        // onErrorMap catches thrown exceptions that are not GraphExceptions (e.g. NetworkTimeout,
+        // SSLException) and wraps them with DeadLetterQueueableException
+        .onErrorMap(
+            throwable -> !(throwable instanceof GraphException),
+            throwable -> new DeadLetterQueueableException(throwable.toString()));
   }
 }
