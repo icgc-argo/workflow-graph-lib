@@ -23,7 +23,7 @@ import org.icgc_argo.workflow_graph_lib.graphql.client.GetWorkflowStateQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.PublishedAnalysesForGraphEventQuery;
 import org.icgc_argo.workflow_graph_lib.graphql.client.StartRunMutation;
 import org.icgc_argo.workflow_graph_lib.graphql.client.fragment.AnalysisDetailsForGraphEvent;
-import org.icgc_argo.workflow_graph_lib.graphql.client.type.WorkflowEngineParams;
+import org.icgc_argo.workflow_graph_lib.graphql.client.type.RequestEngineParameters;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
 import org.icgc_argo.workflow_graph_lib.utils.RecordToFlattenedMap;
@@ -179,9 +179,9 @@ public class RdpcClient {
    * @param params WorkflowEngineParams model owned by developer
    * @return WorkflowEngineParams model owned by Apollo code gen
    */
-  private static WorkflowEngineParams engineParamsAdapter(
+  private static RequestEngineParameters engineParamsAdapter(
       @NonNull org.icgc_argo.workflow_graph_lib.workflow.model.WorkflowEngineParams params) {
-    val builder = WorkflowEngineParams.builder();
+    val builder = RequestEngineParameters.builder();
     builder.revision(params.getRevision());
     builder.launchDir(params.getLaunchDir());
     builder.projectDir(params.getProjectDir());
@@ -327,6 +327,7 @@ public class RdpcClient {
                               .ifPresentOrElse(
                                   data ->
                                       data.getRuns()
+                                          .getContent()
                                           .ifPresentOrElse(
                                               runs ->
                                                   runs.stream()
@@ -396,6 +397,7 @@ public class RdpcClient {
                               .ifPresentOrElse(
                                   data ->
                                       data.getAnalyses()
+                                          .getContent()
                                           .ifPresentOrElse(
                                               analyses ->
                                                   analyses.stream()
@@ -411,7 +413,7 @@ public class RdpcClient {
                                                                       () ->
                                                                           sinkError(
                                                                               sink,
-                                                                              "Analysis couldn't be converted to GraphEvent",
+                                                                              "Analysis could not be converted to GraphEvent",
                                                                               DeadLetterQueueableException
                                                                                   .class)),
                                                           () ->
@@ -467,6 +469,7 @@ public class RdpcClient {
                               .ifPresentOrElse(
                                   data ->
                                       data.getRuns()
+                                          .getContent()
                                           .ifPresentOrElse(
                                               runs ->
                                                   runs.stream()

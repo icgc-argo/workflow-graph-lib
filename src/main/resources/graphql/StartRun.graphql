@@ -1,7 +1,7 @@
 mutation StartRun(
     $workflowUrl:String!,
     $workflowParams:JSON!,
-    $workflowEngineParams: WorkflowEngineParams) {
+    $workflowEngineParams: RequestEngineParameters) {
     startRun(request: {
         workflowUrl: $workflowUrl,
         workflowParams: $workflowParams,

@@ -1,5 +1,7 @@
 query GetAnalysisForGraphEvent($analysisId: String!) {
     analyses(filter: {analysisId: $analysisId}) {
-        ...analysisDetailsForGraphEvent
-  }
+        content {
+            ...analysisDetailsForGraphEvent
+        }
+    }
 }

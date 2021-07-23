@@ -1,7 +1,9 @@
 query GetWorkflowState($runId: String!) {
     runs(filter: {runId: $runId}) {
-        runId
-        state
-        success
+        content {
+            runId
+            state
+            success
+        }
     }
 }
