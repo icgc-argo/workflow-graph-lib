@@ -413,7 +413,7 @@ public class RdpcClient {
                                                                       () ->
                                                                           sinkError(
                                                                               sink,
-                                                                              "Analysis couldn't be converted to GraphEvent",
+                                                                              "Analysis could not be converted to GraphEvent",
                                                                               DeadLetterQueueableException
                                                                                   .class)),
                                                           () ->
