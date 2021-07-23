@@ -3,6 +3,10 @@ package org.icgc_argo.workflow_graph_lib.workflow.client.oauth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +34,16 @@ public class OAuthManager {
 
   private String token;
 
+  @SneakyThrows
   public String getToken() {
     try {
-      Jwts.parserBuilder().setSigningKey(publicKey).build().parse(token);
+
+      // The JWT library in use is really bad at handling RSA keys in Base64 form.
+      val kf = KeyFactory.getInstance("RSA");
+      val keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
+      val pubKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
+
+      Jwts.parserBuilder().setSigningKey(pubKey).build().parse(token);
       return token;
     } catch (JwtException ex) {
       log.warn("Refreshing JWT for reason: {}", ex.getMessage());
@@ -81,7 +92,7 @@ public class OAuthManager {
         .body()
         .string()
         .replaceAll("-----BEGIN PUBLIC KEY-----\r\n", "")
-        .replaceAll("\r\n-----END PUBLIC KEY-----\r\n", "")
+        .replaceAll("\r\n-----END PUBLIC KEY-----", "")
         .strip();
   }
 }
