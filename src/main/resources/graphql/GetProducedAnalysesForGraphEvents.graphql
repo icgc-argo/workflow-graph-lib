@@ -1,9 +1,11 @@
 query PublishedAnalysesForGraphEvent($runId: String!) {
-    runs(filter: {runId: $runId}) {
-        runId
-        state
-        producedAnalyses{
-            ...analysisDetailsForGraphEvent
-        }
-     }
- }
+  runs(filter: { runId: $runId }) {
+    content {
+      runId
+      state
+      producedAnalyses {
+        ...analysisDetailsForGraphEvent
+      }
+    }
+  }
+}
