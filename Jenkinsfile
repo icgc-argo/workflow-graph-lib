@@ -12,13 +12,13 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: graal
-    command: ['cat']
-    tty: true
-    image: icgcargo/graalvm:java11-20.2.0
-    env:
-      - name: HOME
-        value: /home/jenkins/agent
+    - name: graal
+      command: ['cat']
+      tty: true
+      image: icgcargo/graalvm:java11-20.2.0
+      env:
+        - name: HOME
+          value: /home/jenkins/agent
   securityContext:
       runAsUser: 1000
 """
