@@ -32,10 +32,43 @@
       ]
     },
     {
-      "name": "donorIds",
+      "name": "samples",
       "type": {
         "type": "array",
-        "items": "string"
+        "items": {
+            "type": "record",
+            "name": "AnalysisSample",
+            "fields": [
+                {
+                  "name": "sampleId",
+                  "type": "string"
+                },
+                {
+                  "name": "submitterSampleId",
+                  "type": "string"
+                },
+                {
+                  "name": "donorId",
+                  "type": "string"
+                },
+                {
+                  "name": "submitterDonorId",
+                  "type": "string"
+                },
+                {
+                  "name": "specimenId",
+                  "type": "string"
+                },
+                {
+                  "name": "submitterSpecimenId",
+                  "type": "string"
+                },
+                {
+                  "name": "tumourNormalDesignation",
+                  "type": "string"
+                }
+            ]
+        }
       }
     },
     {

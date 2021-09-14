@@ -13,11 +13,11 @@ import org.apache.avro.specific.SpecificData;
 @org.apache.avro.specific.AvroGenerated
 public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = -7497127863358708963L;
+  private static final long serialVersionUID = -4806145390270610471L;
   public static final org.apache.avro.Schema SCHEMA$ =
       new org.apache.avro.Schema.Parser()
           .parse(
-              "{\"type\":\"record\",\"name\":\"GraphEvent\",\"namespace\":\"org.icgc_argo.workflow_graph_lib.schema\",\"fields\":[{\"name\":\"id\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"},\"logicalType\":\"UUID\"},{\"name\":\"analysisId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisState\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"studyId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"experimentalStrategy\",\"type\":[{\"type\":\"string\",\"avro.java.string\":\"String\"},\"null\"]},{\"name\":\"donorIds\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"files\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"AnalysisFile\",\"fields\":[{\"name\":\"dataType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}}}]}");
+              "{\"type\":\"record\",\"name\":\"GraphEvent\",\"namespace\":\"org.icgc_argo.workflow_graph_lib.schema\",\"fields\":[{\"name\":\"id\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"},\"logicalType\":\"UUID\"},{\"name\":\"analysisId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisState\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"analysisType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"studyId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"experimentalStrategy\",\"type\":[{\"type\":\"string\",\"avro.java.string\":\"String\"},\"null\"]},{\"name\":\"samples\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"AnalysisSample\",\"fields\":[{\"name\":\"sampleId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"submitterSampleId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"donorId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"submitterDonorId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"specimenId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"submitterSpecimenId\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"tumourNormalDesignation\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}}},{\"name\":\"files\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"AnalysisFile\",\"fields\":[{\"name\":\"dataType\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}]}}}]}");
 
   public static org.apache.avro.Schema getClassSchema() {
     return SCHEMA$;
@@ -88,7 +88,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   private java.lang.String analysisType;
   private java.lang.String studyId;
   private java.lang.String experimentalStrategy;
-  private java.util.List<java.lang.String> donorIds;
+  private java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> samples;
   private java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile> files;
 
   /**
@@ -106,7 +106,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
    * @param analysisType The new value for analysisType
    * @param studyId The new value for studyId
    * @param experimentalStrategy The new value for experimentalStrategy
-   * @param donorIds The new value for donorIds
+   * @param samples The new value for samples
    * @param files The new value for files
    */
   public GraphEvent(
@@ -116,7 +116,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
       java.lang.String analysisType,
       java.lang.String studyId,
       java.lang.String experimentalStrategy,
-      java.util.List<java.lang.String> donorIds,
+      java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> samples,
       java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile> files) {
     this.id = id;
     this.analysisId = analysisId;
@@ -124,7 +124,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     this.analysisType = analysisType;
     this.studyId = studyId;
     this.experimentalStrategy = experimentalStrategy;
-    this.donorIds = donorIds;
+    this.samples = samples;
     this.files = files;
   }
 
@@ -151,7 +151,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
       case 5:
         return experimentalStrategy;
       case 6:
-        return donorIds;
+        return samples;
       case 7:
         return files;
       default:
@@ -182,7 +182,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
         experimentalStrategy = value$ != null ? value$.toString() : null;
         break;
       case 6:
-        donorIds = (java.util.List<java.lang.String>) value$;
+        samples = (java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample>) value$;
         break;
       case 7:
         files = (java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile>) value$;
@@ -301,21 +301,22 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
   }
 
   /**
-   * Gets the value of the 'donorIds' field.
+   * Gets the value of the 'samples' field.
    *
-   * @return The value of the 'donorIds' field.
+   * @return The value of the 'samples' field.
    */
-  public java.util.List<java.lang.String> getDonorIds() {
-    return donorIds;
+  public java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> getSamples() {
+    return samples;
   }
 
   /**
-   * Sets the value of the 'donorIds' field.
+   * Sets the value of the 'samples' field.
    *
    * @param value the value to set.
    */
-  public void setDonorIds(java.util.List<java.lang.String> value) {
-    this.donorIds = value;
+  public void setSamples(
+      java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> value) {
+    this.samples = value;
   }
 
   /**
@@ -386,7 +387,7 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     private java.lang.String analysisType;
     private java.lang.String studyId;
     private java.lang.String experimentalStrategy;
-    private java.util.List<java.lang.String> donorIds;
+    private java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> samples;
     private java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisFile> files;
 
     /** Creates a new Builder */
@@ -426,8 +427,8 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
             data().deepCopy(fields()[5].schema(), other.experimentalStrategy);
         fieldSetFlags()[5] = other.fieldSetFlags()[5];
       }
-      if (isValidValue(fields()[6], other.donorIds)) {
-        this.donorIds = data().deepCopy(fields()[6].schema(), other.donorIds);
+      if (isValidValue(fields()[6], other.samples)) {
+        this.samples = data().deepCopy(fields()[6].schema(), other.samples);
         fieldSetFlags()[6] = other.fieldSetFlags()[6];
       }
       if (isValidValue(fields()[7], other.files)) {
@@ -468,8 +469,8 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
             data().deepCopy(fields()[5].schema(), other.experimentalStrategy);
         fieldSetFlags()[5] = true;
       }
-      if (isValidValue(fields()[6], other.donorIds)) {
-        this.donorIds = data().deepCopy(fields()[6].schema(), other.donorIds);
+      if (isValidValue(fields()[6], other.samples)) {
+        this.samples = data().deepCopy(fields()[6].schema(), other.samples);
         fieldSetFlags()[6] = true;
       }
       if (isValidValue(fields()[7], other.files)) {
@@ -737,44 +738,44 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
     }
 
     /**
-     * Gets the value of the 'donorIds' field.
+     * Gets the value of the 'samples' field.
      *
      * @return The value.
      */
-    public java.util.List<java.lang.String> getDonorIds() {
-      return donorIds;
+    public java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> getSamples() {
+      return samples;
     }
 
     /**
-     * Sets the value of the 'donorIds' field.
+     * Sets the value of the 'samples' field.
      *
-     * @param value The value of 'donorIds'.
+     * @param value The value of 'samples'.
      * @return This builder.
      */
-    public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setDonorIds(
-        java.util.List<java.lang.String> value) {
+    public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder setSamples(
+        java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> value) {
       validate(fields()[6], value);
-      this.donorIds = value;
+      this.samples = value;
       fieldSetFlags()[6] = true;
       return this;
     }
 
     /**
-     * Checks whether the 'donorIds' field has been set.
+     * Checks whether the 'samples' field has been set.
      *
-     * @return True if the 'donorIds' field has been set, false otherwise.
+     * @return True if the 'samples' field has been set, false otherwise.
      */
-    public boolean hasDonorIds() {
+    public boolean hasSamples() {
       return fieldSetFlags()[6];
     }
 
     /**
-     * Clears the value of the 'donorIds' field.
+     * Clears the value of the 'samples' field.
      *
      * @return This builder.
      */
-    public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearDonorIds() {
-      donorIds = null;
+    public org.icgc_argo.workflow_graph_lib.schema.GraphEvent.Builder clearSamples() {
+      samples = null;
       fieldSetFlags()[6] = false;
       return this;
     }
@@ -840,10 +841,11 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
             fieldSetFlags()[5]
                 ? this.experimentalStrategy
                 : (java.lang.String) defaultValue(fields()[5]);
-        record.donorIds =
+        record.samples =
             fieldSetFlags()[6]
-                ? this.donorIds
-                : (java.util.List<java.lang.String>) defaultValue(fields()[6]);
+                ? this.samples
+                : (java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample>)
+                    defaultValue(fields()[6]);
         record.files =
             fieldSetFlags()[7]
                 ? this.files
@@ -901,14 +903,14 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
       out.writeString(this.experimentalStrategy);
     }
 
-    long size0 = this.donorIds.size();
+    long size0 = this.samples.size();
     out.writeArrayStart();
     out.setItemCount(size0);
     long actualSize0 = 0;
-    for (java.lang.String e0 : this.donorIds) {
+    for (org.icgc_argo.workflow_graph_lib.schema.AnalysisSample e0 : this.samples) {
       actualSize0++;
       out.startItem();
-      out.writeString(e0);
+      e0.customEncode(out);
     }
     out.writeArrayEnd();
     if (actualSize0 != size0)
@@ -952,19 +954,25 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
       }
 
       long size0 = in.readArrayStart();
-      java.util.List<java.lang.String> a0 = this.donorIds;
+      java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> a0 = this.samples;
       if (a0 == null) {
         a0 =
-            new SpecificData.Array<java.lang.String>(
-                (int) size0, SCHEMA$.getField("donorIds").schema());
-        this.donorIds = a0;
+            new SpecificData.Array<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample>(
+                (int) size0, SCHEMA$.getField("samples").schema());
+        this.samples = a0;
       } else a0.clear();
-      SpecificData.Array<java.lang.String> ga0 =
-          (a0 instanceof SpecificData.Array ? (SpecificData.Array<java.lang.String>) a0 : null);
+      SpecificData.Array<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> ga0 =
+          (a0 instanceof SpecificData.Array
+              ? (SpecificData.Array<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample>) a0
+              : null);
       for (; 0 < size0; size0 = in.arrayNext()) {
         for (; size0 != 0; size0--) {
-          java.lang.String e0 = (ga0 != null ? ga0.peek() : null);
-          e0 = in.readString();
+          org.icgc_argo.workflow_graph_lib.schema.AnalysisSample e0 =
+              (ga0 != null ? ga0.peek() : null);
+          if (e0 == null) {
+            e0 = new org.icgc_argo.workflow_graph_lib.schema.AnalysisSample();
+          }
+          e0.customDecode(in);
           a0.add(e0);
         }
       }
@@ -1027,21 +1035,27 @@ public class GraphEvent extends org.apache.avro.specific.SpecificRecordBase
 
           case 6:
             long size0 = in.readArrayStart();
-            java.util.List<java.lang.String> a0 = this.donorIds;
+            java.util.List<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> a0 =
+                this.samples;
             if (a0 == null) {
               a0 =
-                  new SpecificData.Array<java.lang.String>(
-                      (int) size0, SCHEMA$.getField("donorIds").schema());
-              this.donorIds = a0;
+                  new SpecificData.Array<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample>(
+                      (int) size0, SCHEMA$.getField("samples").schema());
+              this.samples = a0;
             } else a0.clear();
-            SpecificData.Array<java.lang.String> ga0 =
+            SpecificData.Array<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample> ga0 =
                 (a0 instanceof SpecificData.Array
-                    ? (SpecificData.Array<java.lang.String>) a0
+                    ? (SpecificData.Array<org.icgc_argo.workflow_graph_lib.schema.AnalysisSample>)
+                        a0
                     : null);
             for (; 0 < size0; size0 = in.arrayNext()) {
               for (; size0 != 0; size0--) {
-                java.lang.String e0 = (ga0 != null ? ga0.peek() : null);
-                e0 = in.readString();
+                org.icgc_argo.workflow_graph_lib.schema.AnalysisSample e0 =
+                    (ga0 != null ? ga0.peek() : null);
+                if (e0 == null) {
+                  e0 = new org.icgc_argo.workflow_graph_lib.schema.AnalysisSample();
+                }
+                e0.customDecode(in);
                 a0.add(e0);
               }
             }

@@ -6,6 +6,16 @@ fragment analysisDetailsForGraphEvent on Analysis {
     experiment
     donors{
       donorId
+      submitterDonorId
+      specimens {
+        specimenId
+        submitterSpecimenId
+        tumourNormalDesignation
+        samples {
+          sampleId
+          submitterSampleId
+        }
+      }
     }
     files {
         dataType

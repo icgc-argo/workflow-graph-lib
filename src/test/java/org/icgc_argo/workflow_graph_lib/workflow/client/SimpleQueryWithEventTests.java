@@ -1,5 +1,6 @@
 package org.icgc_argo.workflow_graph_lib.workflow.client;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +32,7 @@ class SimpleQueryWithEventTests {
           "anAnalysisType",
           "aStudyId",
           "aStrategy",
-          List.of("Donor1"),
+          Collections.emptyList(),
           List.of(new AnalysisFile("aFileDataType")));
 
   @BeforeEach
