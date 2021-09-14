@@ -211,25 +211,27 @@ public class RdpcClient {
     val analysisSamples =
         analysis.getDonors().orElseGet(Collections::emptyList).stream()
             .flatMap(
-                d ->
-                    d.getSpecimens().orElseGet(Collections::emptyList).stream()
+                donor ->
+                    donor.getSpecimens().orElseGet(Collections::emptyList).stream()
                         .flatMap(
-                            s ->
-                                s.getSamples().orElseGet(Collections::emptyList).stream()
+                            specimen ->
+                                specimen.getSamples().orElseGet(Collections::emptyList).stream()
                                     .map(
-                                        sam ->
+                                        sample ->
                                             AnalysisSample.newBuilder()
-                                                .setSampleId(sam.getSampleId().orElse(""))
+                                                .setSampleId(sample.getSampleId().orElse(""))
                                                 .setSubmitterSampleId(
-                                                    sam.getSubmitterSampleId().orElse(""))
+                                                    sample.getSubmitterSampleId().orElse(""))
                                                 .setSubmitterDonorId(
-                                                    d.getSubmitterDonorId().orElse(""))
-                                                .setDonorId(d.getDonorId().orElse(""))
+                                                    donor.getSubmitterDonorId().orElse(""))
+                                                .setDonorId(donor.getDonorId().orElse(""))
                                                 .setSubmitterSpecimenId(
-                                                    s.getSubmitterSpecimenId().orElse(""))
-                                                .setSpecimenId(s.getSpecimenId().orElse(""))
+                                                    specimen.getSubmitterSpecimenId().orElse(""))
+                                                .setSpecimenId(specimen.getSpecimenId().orElse(""))
                                                 .setTumourNormalDesignation(
-                                                    s.getTumourNormalDesignation().orElse(""))
+                                                    specimen
+                                                        .getTumourNormalDesignation()
+                                                        .orElse(""))
                                                 .build())))
             .collect(toList());
 
