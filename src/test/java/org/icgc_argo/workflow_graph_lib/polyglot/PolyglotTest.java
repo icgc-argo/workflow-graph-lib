@@ -74,19 +74,23 @@ public class PolyglotTest {
 
   @Test
   public void testBuiltInRejectThrowsCommittableException() {
-    assertThrows(CommittableException.class,
-            () -> runMainFunctionWithData(JS, "return reject(\"Testing REJECT\")", Map.of()));
+    assertThrows(
+        CommittableException.class,
+        () -> runMainFunctionWithData(JS, "return reject(\"Testing REJECT\")", Map.of()));
 
-    assertThrows(CommittableException.class,
-            () -> runMainFunctionWithData(PYTHON, "return reject(\"Testing REJECT\")", Map.of()));
+    assertThrows(
+        CommittableException.class,
+        () -> runMainFunctionWithData(PYTHON, "return reject(\"Testing REJECT\")", Map.of()));
   }
 
   @Test
   public void testBuiltInRequeueThrowsNotAcknowledgeableException() {
-    assertThrows(NotAcknowledgeableException.class,
-            () -> runMainFunctionWithData(JS, "return requeue(\"Testing REQUEUE\")", Map.of()));
+    assertThrows(
+        NotAcknowledgeableException.class,
+        () -> runMainFunctionWithData(JS, "return requeue(\"Testing REQUEUE\")", Map.of()));
 
-    assertThrows(NotAcknowledgeableException.class,
-            () -> runMainFunctionWithData(PYTHON, "return requeue(\"Testing REQUEUE\")", Map.of()));
+    assertThrows(
+        NotAcknowledgeableException.class,
+        () -> runMainFunctionWithData(PYTHON, "return requeue(\"Testing REQUEUE\")", Map.of()));
   }
 }
