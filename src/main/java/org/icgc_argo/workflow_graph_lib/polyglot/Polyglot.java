@@ -27,12 +27,6 @@ import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
  */
 @Slf4j
 public class Polyglot {
-  private static final String EXCEPTION_TYPE_KEY = "graphExceptionType";
-  private static final String MESSAGE_KEY = "message";
-
-  private static final String COMMITTABLE_EXCEPTION = "CommittableException";
-  private static final String NOT_ACK_EXCEPTION = "NotAcknowledgeableException";
-
   protected static final Context ctx = buildPolyglotCtx();
 
   /**
