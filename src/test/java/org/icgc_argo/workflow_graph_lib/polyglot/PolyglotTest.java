@@ -3,11 +3,14 @@ package org.icgc_argo.workflow_graph_lib.polyglot;
 import static org.icgc_argo.workflow_graph_lib.polyglot.Polyglot.evaluateBooleanExpression;
 import static org.icgc_argo.workflow_graph_lib.polyglot.Polyglot.runMainFunctionWithData;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Map;
 import lombok.val;
+import org.icgc_argo.workflow_graph_lib.exceptions.CommittableException;
+import org.icgc_argo.workflow_graph_lib.exceptions.NotAcknowledgeableException;
 import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionException;
 import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionValueException;
 import org.junit.jupiter.api.Test;
@@ -67,5 +70,23 @@ public class PolyglotTest {
     assertThrows(
         GraphFunctionException.class,
         () -> evaluateBooleanExpression(JS, "return {bad: code);", Map.of("baz", "qux")));
+  }
+
+  @Test
+  public void testBuiltInRejectThrowsCommittableException() {
+    assertThrows(CommittableException.class,
+            () -> runMainFunctionWithData(JS, "return reject(\"Testing REJECT\")", Map.of()));
+
+    assertThrows(CommittableException.class,
+            () -> runMainFunctionWithData(PYTHON, "return reject(\"Testing REJECT\")", Map.of()));
+  }
+
+  @Test
+  public void testBuiltInRequeueThrowsNotAcknowledgeableException() {
+    assertThrows(NotAcknowledgeableException.class,
+            () -> runMainFunctionWithData(JS, "return requeue(\"Testing REQUEUE\")", Map.of()));
+
+    assertThrows(NotAcknowledgeableException.class,
+            () -> runMainFunctionWithData(PYTHON, "return requeue(\"Testing REQUEUE\")", Map.of()));
   }
 }
