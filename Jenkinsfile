@@ -15,7 +15,7 @@ spec:
     - name: graal
       command: ['cat']
       tty: true
-      image: icgcargo/graalvm:java11-20.2.0
+      image: icgcargo/graalvm:java11-20.2.0-extras-1.0.0
       env:
         - name: HOME
           value: /home/jenkins/agent

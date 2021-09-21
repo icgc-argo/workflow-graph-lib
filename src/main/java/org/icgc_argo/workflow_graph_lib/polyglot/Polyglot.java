@@ -1,11 +1,15 @@
 package org.icgc_argo.workflow_graph_lib.polyglot;
 
 import static java.lang.String.format;
+import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.*;
+import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.GraphExceptionTypes.CommittableException;
+import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.GraphExceptionTypes.NotAcknowledgeableException;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
 import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
 
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -21,8 +25,9 @@ import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
  * Provides a single static context for all GraalVM Polyglot function executions as well as generic
  * static functions that are used to execute code in that GraalVM Polyglot context
  */
+@Slf4j
 public class Polyglot {
-  protected static final Context ctx = Context.newBuilder("python", "js").build();
+  protected static final Context ctx = buildPolyglotCtx();
 
   /**
    * Runs a user defined function using the language specified with, a single argument that is
@@ -40,7 +45,7 @@ public class Polyglot {
       final String scriptContent,
       final Map<String, Object> data) {
     try {
-      val returnValue =
+      Map<String, Object> returnedValue =
           PatternMatch.<GraphFunctionLanguage, Value>match(language)
               .on(
                   lang -> lang.equals(GraphFunctionLanguage.JS),
@@ -52,9 +57,12 @@ public class Polyglot {
                   () -> {
                     throw new GraphFunctionUnsupportedLanguageException(
                         format("Operation %s is not supported", language));
-                  });
+                  })
+              .as(Map.class);
 
-      return (Map<String, Object>) returnValue.as(Map.class);
+      throwErrorIfMapIsGuestLangGraphException(returnedValue);
+
+      return returnedValue;
     } catch (PolyglotException ex) {
       throw new GraphFunctionException(ex.getLocalizedMessage());
     } catch (IllegalStateException | ClassCastException ex) {
@@ -154,5 +162,19 @@ public class Polyglot {
     final Source source = Source.newBuilder(language, script, scriptFileName).buildLiteral();
     ctx.eval(source);
     return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
+  }
+
+  private static Context buildPolyglotCtx() {
+    val ctx = Context.newBuilder("python", "js").build();
+    try {
+      ctx.eval(buildJsGraphExceptionCreator("reject", CommittableException));
+      ctx.eval(buildJsGraphExceptionCreator("requeue", NotAcknowledgeableException));
+
+      ctx.eval(buildPythonGraphExceptionCreator("reject", CommittableException));
+      ctx.eval(buildPythonGraphExceptionCreator("requeue", NotAcknowledgeableException));
+    } catch (Exception e) {
+      log.error("Failed to add exception object creators to polyglot context!");
+    }
+    return ctx;
   }
 }
