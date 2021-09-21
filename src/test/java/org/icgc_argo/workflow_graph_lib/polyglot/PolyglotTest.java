@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Map;
 import lombok.val;
 import org.icgc_argo.workflow_graph_lib.exceptions.CommittableException;
-import org.icgc_argo.workflow_graph_lib.exceptions.NotAcknowledgeableException;
 import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
 import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionException;
 import org.icgc_argo.workflow_graph_lib.polyglot.exceptions.GraphFunctionValueException;
@@ -91,7 +90,7 @@ public class PolyglotTest {
         () -> runMainFunctionWithData(JS, "return requeue(\"Testing REQUEUE\")", Map.of()));
 
     assertThrows(
-            RequeueableException.class,
+        RequeueableException.class,
         () -> runMainFunctionWithData(PYTHON, "return requeue(\"Testing REQUEUE\")", Map.of()));
   }
 }
