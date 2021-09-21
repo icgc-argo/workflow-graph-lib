@@ -1,5 +1,6 @@
 package org.icgc_argo.workflow_graph_lib.workflow.client;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,7 +14,9 @@ import org.icgc_argo.workflow_graph_lib.exceptions.DeadLetterQueueableException;
 import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import reactor.test.StepVerifier;
@@ -31,7 +34,7 @@ class SimpleQueryWithEventTests {
           "anAnalysisType",
           "aStudyId",
           "aStrategy",
-          List.of("Donor1"),
+          Collections.emptyList(),
           List.of(new AnalysisFile("aFileDataType")));
 
   @BeforeEach

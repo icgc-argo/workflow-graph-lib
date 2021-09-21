@@ -25,6 +25,7 @@ import org.icgc_argo.workflow_graph_lib.graphql.client.StartRunMutation;
 import org.icgc_argo.workflow_graph_lib.graphql.client.fragment.AnalysisDetailsForGraphEvent;
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.RequestEngineParameters;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
+import org.icgc_argo.workflow_graph_lib.schema.AnalysisSample;
 import org.icgc_argo.workflow_graph_lib.schema.GraphEvent;
 import org.icgc_argo.workflow_graph_lib.utils.RecordToFlattenedMap;
 import org.icgc_argo.workflow_graph_lib.workflow.client.oauth.ClientCredentials;
@@ -207,9 +208,31 @@ public class RdpcClient {
       return Optional.empty();
     }
 
-    val donorIds =
+    val analysisSamples =
         analysis.getDonors().orElseGet(Collections::emptyList).stream()
-            .map(d -> d.getDonorId().orElse(""))
+            .flatMap(
+                donor ->
+                    donor.getSpecimens().orElseGet(Collections::emptyList).stream()
+                        .flatMap(
+                            specimen ->
+                                specimen.getSamples().orElseGet(Collections::emptyList).stream()
+                                    .map(
+                                        sample ->
+                                            AnalysisSample.newBuilder()
+                                                .setSampleId(sample.getSampleId().orElse(""))
+                                                .setSubmitterSampleId(
+                                                    sample.getSubmitterSampleId().orElse(""))
+                                                .setSubmitterDonorId(
+                                                    donor.getSubmitterDonorId().orElse(""))
+                                                .setDonorId(donor.getDonorId().orElse(""))
+                                                .setSubmitterSpecimenId(
+                                                    specimen.getSubmitterSpecimenId().orElse(""))
+                                                .setSpecimenId(specimen.getSpecimenId().orElse(""))
+                                                .setTumourNormalDesignation(
+                                                    specimen
+                                                        .getTumourNormalDesignation()
+                                                        .orElse(""))
+                                                .build())))
             .collect(toList());
 
     String experimentalStrategy = "";
@@ -234,7 +257,7 @@ public class RdpcClient {
             analysis.getAnalysisType().get(),
             analysis.getStudyId().get(),
             experimentalStrategy,
-            donorIds,
+            analysisSamples,
             files));
   }
 
