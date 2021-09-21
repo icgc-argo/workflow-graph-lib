@@ -11,7 +11,7 @@ import lombok.val;
 import org.graalvm.polyglot.Source;
 import org.icgc_argo.workflow_graph_lib.exceptions.CommittableException;
 import org.icgc_argo.workflow_graph_lib.exceptions.GraphException;
-import org.icgc_argo.workflow_graph_lib.exceptions.NotAcknowledgeableException;
+import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
 
 /**
  * Collection of helper functions used by Polyglot to set up guest language functions to create
@@ -35,8 +35,8 @@ public class GuestLangGraphExceptionUtils {
         map.get(EXCEPTION_TYPE_KEY), GraphExceptionTypes.CommittableException.name())) {
       throw new CommittableException(map.get(MESSAGE_KEY).toString());
     } else if (Objects.equals(
-        map.get(EXCEPTION_TYPE_KEY), GraphExceptionTypes.NotAcknowledgeableException.name())) {
-      throw new NotAcknowledgeableException(map.get(MESSAGE_KEY).toString());
+        map.get(EXCEPTION_TYPE_KEY), GraphExceptionTypes.RequeueableException.name())) {
+      throw new RequeueableException(map.get(MESSAGE_KEY).toString());
     }
   }
 
@@ -62,6 +62,6 @@ public class GuestLangGraphExceptionUtils {
 
   public enum GraphExceptionTypes {
     CommittableException,
-    NotAcknowledgeableException
+    RequeueableException
   }
 }

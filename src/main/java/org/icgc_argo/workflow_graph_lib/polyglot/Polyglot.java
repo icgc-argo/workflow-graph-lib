@@ -3,7 +3,7 @@ package org.icgc_argo.workflow_graph_lib.polyglot;
 import static java.lang.String.format;
 import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.*;
 import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.GraphExceptionTypes.CommittableException;
-import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.GraphExceptionTypes.NotAcknowledgeableException;
+import static org.icgc_argo.workflow_graph_lib.polyglot.GuestLangGraphExceptionUtils.GraphExceptionTypes.RequeueableException;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
 import static org.icgc_argo.workflow_graph_lib.utils.JacksonUtils.toMap;
@@ -168,10 +168,10 @@ public class Polyglot {
     val ctx = Context.newBuilder("python", "js").build();
     try {
       ctx.eval(buildJsGraphExceptionCreator("reject", CommittableException));
-      ctx.eval(buildJsGraphExceptionCreator("requeue", NotAcknowledgeableException));
+      ctx.eval(buildJsGraphExceptionCreator("requeue", RequeueableException));
 
       ctx.eval(buildPythonGraphExceptionCreator("reject", CommittableException));
-      ctx.eval(buildPythonGraphExceptionCreator("requeue", NotAcknowledgeableException));
+      ctx.eval(buildPythonGraphExceptionCreator("requeue", RequeueableException));
     } catch (Exception e) {
       log.error("Failed to add exception object creators to polyglot context!");
     }
