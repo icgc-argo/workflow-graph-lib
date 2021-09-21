@@ -3,6 +3,7 @@ package org.icgc_argo.workflow_graph_lib.polyglot;
 import static org.icgc_argo.workflow_graph_lib.polyglot.Polyglot.evaluateBooleanExpression;
 import static org.icgc_argo.workflow_graph_lib.polyglot.Polyglot.runMainFunctionWithData;
 import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.JS;
+import static org.icgc_argo.workflow_graph_lib.polyglot.enums.GraphFunctionLanguage.PYTHON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -77,12 +78,9 @@ public class PolyglotTest {
         CommittableException.class,
         () -> runMainFunctionWithData(JS, "return reject(\"Testing REJECT\")", Map.of()));
 
-    // Python test is commented out because the Graalvm image used in Jenkins doesn't seem to have
-    // python included.
-    // This causes IllegalArgumentException instead of expected one.
-    //    assertThrows(
-    //        CommittableException.class,
-    //        () -> runMainFunctionWithData(PYTHON, "return reject(\"Testing REJECT\")", Map.of()));
+    assertThrows(
+        CommittableException.class,
+        () -> runMainFunctionWithData(PYTHON, "return reject(\"Testing REJECT\")", Map.of()));
   }
 
   @Test
@@ -91,12 +89,8 @@ public class PolyglotTest {
         NotAcknowledgeableException.class,
         () -> runMainFunctionWithData(JS, "return requeue(\"Testing REQUEUE\")", Map.of()));
 
-    // Python test is commented out because the Graalvm image used in Jenkins doesn't seem to have
-    // python included.
-    // This causes IllegalArgumentException instead of expected one.
-    //    assertThrows(
-    //        NotAcknowledgeableException.class,
-    //        () -> runMainFunctionWithData(PYTHON, "return requeue(\"Testing REQUEUE\")",
-    // Map.of()));
+    assertThrows(
+        NotAcknowledgeableException.class,
+        () -> runMainFunctionWithData(PYTHON, "return requeue(\"Testing REQUEUE\")", Map.of()));
   }
 }
