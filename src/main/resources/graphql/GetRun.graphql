@@ -1,0 +1,20 @@
+query GetRun($runId: String!) {
+    runs(filter: {runId: $runId}) {
+        content {
+            runId
+            sessionId
+            state
+            repository
+            parameters
+            engineParameters {
+              defaultContainer
+              latest
+              launchDir
+              projectDir
+              resume
+              revision
+              workDir
+            }
+        }
+    }
+}
