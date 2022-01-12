@@ -406,11 +406,6 @@ public class RdpcClient {
                               Response<Optional<GetWorkflowInfoForRestartQuery.Data>> response) {
                         if (response.hasErrors()) {
                           handleGraphQLError(sink, response.getErrors().get(0));
-                        } else if (Objects.requireNonNull(response.getData()).isEmpty()) {
-                          sinkError(
-                              sink,
-                              "No runId Found in response.",
-                              DeadLetterQueueableException.class);
                         } else {
                           sink.success(
                               response
@@ -425,7 +420,7 @@ public class RdpcClient {
 
                       @Override
                       public void onFailure(@NotNull ApolloException e) {
-                        sink.error(new Exception("Failed to fetch run by id!"));
+                        sink.error(new Exception("Failed to fetch run by ID!"));
                       }
                     }));
   }
