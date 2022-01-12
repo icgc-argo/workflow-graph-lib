@@ -1,0 +1,18 @@
+query GetWorkflowInfoForRestart($runId: String!, $repository: String!) {
+    result: runs(filter: {runId: $runId, repository: $repository}) {
+        runs: content {
+            runId
+            sessionId
+            parameters
+            engineParameters {
+              defaultContainer
+              latest
+              launchDir
+              projectDir
+              resume
+              revision
+              workDir
+            }
+        }
+    }
+}

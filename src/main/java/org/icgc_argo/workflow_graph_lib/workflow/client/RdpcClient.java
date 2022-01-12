@@ -18,10 +18,7 @@ import okhttp3.OkHttpClient;
 import org.icgc_argo.workflow_graph_lib.exceptions.DeadLetterQueueableException;
 import org.icgc_argo.workflow_graph_lib.exceptions.GraphException;
 import org.icgc_argo.workflow_graph_lib.exceptions.RequeueableException;
-import org.icgc_argo.workflow_graph_lib.graphql.client.GetAnalysisForGraphEventQuery;
-import org.icgc_argo.workflow_graph_lib.graphql.client.GetWorkflowStateQuery;
-import org.icgc_argo.workflow_graph_lib.graphql.client.PublishedAnalysesForGraphEventQuery;
-import org.icgc_argo.workflow_graph_lib.graphql.client.StartRunMutation;
+import org.icgc_argo.workflow_graph_lib.graphql.client.*;
 import org.icgc_argo.workflow_graph_lib.graphql.client.fragment.AnalysisDetailsForGraphEvent;
 import org.icgc_argo.workflow_graph_lib.graphql.client.type.RequestEngineParameters;
 import org.icgc_argo.workflow_graph_lib.schema.AnalysisFile;
@@ -391,6 +388,39 @@ public class RdpcClient {
                       public void onFailure(@NotNull ApolloException e) {
                         log.trace("ApolloException thrown");
                         handleApolloException(sink, e);
+                      }
+                    }));
+  }
+
+  public Mono<Optional<GetWorkflowInfoForRestartQuery.Run>> findWorkflowByRunIdAndRepo(
+      String runId, String repository) {
+    return Mono.create(
+        sink ->
+            client
+                .query(new GetWorkflowInfoForRestartQuery(runId, repository))
+                .enqueue(
+                    new ApolloCall.Callback<>() {
+                      @Override
+                      public void onResponse(
+                          @NotNull
+                              Response<Optional<GetWorkflowInfoForRestartQuery.Data>> response) {
+                        if (response.hasErrors()) {
+                          handleGraphQLError(sink, response.getErrors().get(0));
+                        } else {
+                          sink.success(
+                              response
+                                  .getData()
+                                  .flatMap(
+                                      data ->
+                                          data.getResult()
+                                              .getRuns()
+                                              .flatMap(contents -> contents.stream().findFirst())));
+                        }
+                      }
+
+                      @Override
+                      public void onFailure(@NotNull ApolloException e) {
+                        sink.error(new Exception("Failed to fetch run by ID!"));
                       }
                     }));
   }
