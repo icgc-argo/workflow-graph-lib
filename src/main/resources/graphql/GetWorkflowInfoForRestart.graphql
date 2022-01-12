@@ -1,10 +1,8 @@
-query GetRun($runId: String!) {
-    runs(filter: {runId: $runId}) {
-        content {
+query GetWorkflowInfoForRestart($runId: String!, $repository: String!) {
+    result: runs(filter: {runId: $runId, repository: $repository}) {
+        runs: content {
             runId
             sessionId
-            state
-            repository
             parameters
             engineParameters {
               defaultContainer

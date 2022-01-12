@@ -392,16 +392,18 @@ public class RdpcClient {
                     }));
   }
 
-  public Mono<Optional<GetRunQuery.Content>> findWorkflowByRunId(String runId) {
+  public Mono<Optional<GetWorkflowInfoForRestartQuery.Run>> findWorkflowByRunIdAndRepo(
+      String runId, String repository) {
     return Mono.create(
         sink ->
             client
-                .query(new GetRunQuery(runId))
+                .query(new GetWorkflowInfoForRestartQuery(runId, repository))
                 .enqueue(
                     new ApolloCall.Callback<>() {
                       @Override
                       public void onResponse(
-                          @NotNull Response<Optional<GetRunQuery.Data>> response) {
+                          @NotNull
+                              Response<Optional<GetWorkflowInfoForRestartQuery.Data>> response) {
                         if (response.hasErrors()) {
                           handleGraphQLError(sink, response.getErrors().get(0));
                         } else if (Objects.requireNonNull(response.getData()).isEmpty()) {
@@ -415,8 +417,8 @@ public class RdpcClient {
                                   .getData()
                                   .flatMap(
                                       data ->
-                                          data.getRuns()
-                                              .getContent()
+                                          data.getResult()
+                                              .getRuns()
                                               .flatMap(contents -> contents.stream().findFirst())));
                         }
                       }
