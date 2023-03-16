@@ -152,7 +152,7 @@ public class Polyglot {
     return runFunctionMain("python", "python", "script.py", pythonScript, eventMap);
   }
 
-  protected static Value runFunctionMain(
+  protected synchronized static Value runFunctionMain(
       final String language,
       final String languageId,
       final String scriptFileName,
@@ -164,7 +164,7 @@ public class Polyglot {
     return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
   }
 
-  private static Context buildPolyglotCtx() {
+  private synchronized static Context buildPolyglotCtx() {
     val ctx = Context.newBuilder("python", "js").build();
     try {
       ctx.eval(buildJsGraphExceptionCreator("reject", CommittableException));
