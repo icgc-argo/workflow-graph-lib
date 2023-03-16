@@ -2,6 +2,7 @@ package org.icgc_argo.workflow_graph_lib.workflow.client;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
+import static org.icgc_argo.workflow_graph_lib.polyglot.GraalvmLock.LOCK;
 
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.ApolloClient;
@@ -265,7 +266,9 @@ public class RdpcClient {
    * @return Returns a Mono of the Workflow RunId
    */
   public Mono<String> startRun(RunRequest runRequest) {
-    return Mono.create(
+
+    synchronized(LOCK){
+      return Mono.create(
         sink -> {
           val mutationBuilder =
               StartRunMutation.builder()
@@ -321,6 +324,7 @@ public class RdpcClient {
                     }
                   });
         });
+  }
   }
 
   /**
