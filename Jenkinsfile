@@ -47,6 +47,7 @@ spec:
                 anyOf {
                     branch "master"
                     branch "develop"
+                    branch "polyglot_context_synchronization"
                 }
             }
             steps {
