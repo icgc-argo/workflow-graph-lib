@@ -265,9 +265,9 @@ public class RdpcClient {
    * @param runRequest Run Request describing all information to run the workflow
    * @return Returns a Mono of the Workflow RunId
    */
-  public Mono<String> startRun(RunRequest runRequest) {
+  public synchronized Mono<String> startRun(RunRequest runRequest) {
 
-    synchronized(LOCK){
+    //synchronized(LOCK){
       return Mono.create(
         sink -> {
           val mutationBuilder =
@@ -325,7 +325,7 @@ public class RdpcClient {
                   });
         });
   }
-  }
+  //}
 
   /**
    * Get the status of a workflow
