@@ -265,67 +265,72 @@ public class RdpcClient {
    * @param runRequest Run Request describing all information to run the workflow
    * @return Returns a Mono of the Workflow RunId
    */
-  public synchronized Mono<String> startRun(RunRequest runRequest) {
+  public Mono<String> startRun(RunRequest runRequest) {
 
-    //synchronized(LOCK){
+    synchronized (LOCK) {
+      log.debug("Lock acquired -D : "+runRequest.getWorkflowParams().toString());
+      log.error("Lock acquired -E : "+runRequest.getWorkflowParams().toString());
+      log.trace("Lock acquired -T : "+runRequest.getWorkflowParams().toString());
+      log.warn("Lock acquired -W : "+runRequest.getWorkflowParams().toString());
+      log.info("Lock acquired -I : "+runRequest.getWorkflowParams().toString());
       return Mono.create(
-        sink -> {
-          val mutationBuilder =
-              StartRunMutation.builder()
-                  .workflowUrl(runRequest.getWorkflowUrl())
-                  .workflowParams(runRequest.getWorkflowParams());
-          if (runRequest.getWorkflowEngineParams() != null) {
-            mutationBuilder.workflowEngineParams(
-                engineParamsAdapter(runRequest.getWorkflowEngineParams()));
-          }
+          sink -> {
+            val mutationBuilder =
+                StartRunMutation.builder()
+                    .workflowUrl(runRequest.getWorkflowUrl())
+                    .workflowParams(runRequest.getWorkflowParams());
+            if (runRequest.getWorkflowEngineParams() != null) {
+              mutationBuilder.workflowEngineParams(
+                  engineParamsAdapter(runRequest.getWorkflowEngineParams()));
+            }
 
-          client
-              .mutate(mutationBuilder.build())
-              .enqueue(
-                  new ApolloCall.Callback<>() {
-                    @Override
-                    public void onResponse(
-                        @NotNull Response<Optional<StartRunMutation.Data>> response) {
-                      if (response.hasErrors()) {
-                        handleGraphQLError(sink, response.getErrors().get(0));
-                      } else {
-                        response
-                            .getData()
-                            .ifPresentOrElse(
-                                data ->
-                                    data.getStartRun()
-                                        .ifPresentOrElse(
-                                            startRun ->
-                                                startRun
-                                                    .getRunId()
-                                                    .ifPresentOrElse(
-                                                        sink::success,
-                                                        () ->
-                                                            sinkError(
-                                                                sink,
-                                                                "No runId Found in response.",
-                                                                DeadLetterQueueableException
-                                                                    .class)),
-                                            () ->
-                                                sinkError(
-                                                    sink,
-                                                    "Empty Response from API.",
-                                                    RequeueableException.class)),
-                                () ->
-                                    sinkError(
-                                        sink, "No Response from API.", RequeueableException.class));
+            client
+                .mutate(mutationBuilder.build())
+                .enqueue(
+                    new ApolloCall.Callback<>() {
+                      @Override
+                      public void onResponse(
+                          @NotNull Response<Optional<StartRunMutation.Data>> response) {
+                        if (response.hasErrors()) {
+                          handleGraphQLError(sink, response.getErrors().get(0));
+                        } else {
+                          response
+                              .getData()
+                              .ifPresentOrElse(
+                                  data ->
+                                      data.getStartRun()
+                                          .ifPresentOrElse(
+                                              startRun ->
+                                                  startRun
+                                                      .getRunId()
+                                                      .ifPresentOrElse(
+                                                          sink::success,
+                                                          () ->
+                                                              sinkError(
+                                                                  sink,
+                                                                  "No runId Found in response.",
+                                                                  DeadLetterQueueableException
+                                                                      .class)),
+                                              () ->
+                                                  sinkError(
+                                                      sink,
+                                                      "Empty Response from API.",
+                                                      RequeueableException.class)),
+                                  () ->
+                                      sinkError(
+                                          sink, "No Response from API.", RequeueableException.class));
+                        }
                       }
-                    }
 
-                    @Override
-                    public void onFailure(@NotNull ApolloException e) {
-                      log.trace("ApolloException thrown");
-                      handleApolloException(sink, e);
-                    }
-                  });
-        });
+                      @Override
+                      public void onFailure(@NotNull ApolloException e) {
+                        log.trace("ApolloException thrown");
+                        handleApolloException(sink, e);
+                      }
+                    });
+          });
+    }
   }
-  //}
 
   /**
    * Get the status of a workflow

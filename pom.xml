@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>workflow-graph-lib</artifactId>
-    <version>1.10.3-TEST</version>
+    <version>1.10.4-TEST</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Library functions used throughout Workflow Graph Components</description>
