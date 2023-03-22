@@ -328,6 +328,7 @@ public class RdpcClient {
                         handleApolloException(sink, e);
                       }
                     });
+            log.info("RELEASING LOCK -I : "+runRequest.getWorkflowParams().toString());
           });
     }
   }
