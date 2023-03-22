@@ -158,13 +158,16 @@ public class Polyglot {
       final String scriptFileName,
       final String script,
       final Map<String, Object> data) {
+    log.info("Polyglot Lock acquired "+data.toString());
     NestedProxyObject eventMapProxy = new NestedProxyObject(data);
     final Source source = Source.newBuilder(language, script, scriptFileName).buildLiteral();
     ctx.eval(source);
+    log.info("Polyglot Lock releasing..  "+data.toString());
     return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
   }
 
   private static synchronized Context buildPolyglotCtx() {
+    log.info("Polyglot Lock acquired");
     val ctx = Context.newBuilder("python", "js").build();
     try {
       ctx.eval(buildJsGraphExceptionCreator("reject", CommittableException));
@@ -175,6 +178,7 @@ public class Polyglot {
     } catch (Exception e) {
       log.error("Failed to add exception object creators to polyglot context!");
     }
+    log.info("Polyglot Lock released ");
     return ctx;
   }
 }
