@@ -27,7 +27,7 @@ import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
  */
 @Slf4j
 public class Polyglot {
-  protected static final Context ctx = buildPolyglotCtx();
+  //protected static final Context ctx = buildPolyglotCtx();
 
   /**
    * Runs a user defined function using the language specified with, a single argument that is
@@ -162,7 +162,8 @@ public class Polyglot {
       log.info("Polyglot Lock acquired " + data.toString());
       NestedProxyObject eventMapProxy = new NestedProxyObject(data);
       final Source source = Source.newBuilder(language, script, scriptFileName).buildLiteral();
-      ctx.eval(source);
+      Context ctx = buildPolyglotCtx(); //Building a new context for every thread.
+      ctx.eval(source);  //UK: in the lates run the new incoming analysis takes this lock but then throws the error here
       log.info("Polyglot Lock releasing..  " + data.toString());
       return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
     }
