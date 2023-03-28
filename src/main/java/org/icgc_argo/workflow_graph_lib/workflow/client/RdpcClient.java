@@ -275,6 +275,8 @@ public class RdpcClient {
       log.info("Lock acquired -I : "+runRequest.getWorkflowParams().toString());
       return Mono.create(
           sink -> {
+            log.info("sink context is: "+sink.currentContext().toString());
+            log.info("sink is: "+sink.toString());
             val mutationBuilder =
                 StartRunMutation.builder()
                     .workflowUrl(runRequest.getWorkflowUrl())
@@ -284,14 +286,18 @@ public class RdpcClient {
                   engineParamsAdapter(runRequest.getWorkflowEngineParams()));
             }
 
+
+            log.info(" ... calling mutate: "+runRequest.getWorkflowParams().toString());
             client
                 .mutate(mutationBuilder.build())
-                .enqueue(
+                .enqueue(           
                     new ApolloCall.Callback<>() {
                       @Override
                       public void onResponse(
                           @NotNull Response<Optional<StartRunMutation.Data>> response) {
-                        if (response.hasErrors()) {
+                        synchronized (LOCK){ if (response.hasErrors()) {
+                          log.info(" ... processing MUTATION response for: "+runRequest.getWorkflowParams().toString());
+                          log.info(" ... MUTATION response : "+response.toString());
                           handleGraphQLError(sink, response.getErrors().get(0));
                         } else {
                           response
@@ -320,6 +326,8 @@ public class RdpcClient {
                                       sinkError(
                                           sink, "No Response from API.", RequeueableException.class));
                         }
+                        log.info("Release LOCK from response processor");
+                      }
                       }
 
                       @Override
