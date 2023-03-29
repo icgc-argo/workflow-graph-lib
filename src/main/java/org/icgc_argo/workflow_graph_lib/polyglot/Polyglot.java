@@ -152,13 +152,13 @@ public class Polyglot {
     return runFunctionMain("python", "python", "script.py", pythonScript, eventMap);
   }
 
-  protected static /*synchronized*/ Value runFunctionMain(
+  protected static synchronized Value runFunctionMain(
       final String language,
       final String languageId,
       final String scriptFileName,
       final String script,
       final Map<String, Object> data) {
-    synchronized (GraalvmLock.LOCK) {
+    //synchronized (GraalvmLock.LOCK) {
       log.info("Polyglot Lock acquired " + data.toString());
       NestedProxyObject eventMapProxy = new NestedProxyObject(data);
       final Source source = Source.newBuilder(language, script, scriptFileName).buildLiteral();
@@ -166,12 +166,12 @@ public class Polyglot {
       ctx.eval(source);  //UK: in the lates run the new incoming analysis takes this lock but then throws the error here
       log.info("Polyglot Lock releasing..  " + data.toString());
       return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
-    }
+  //  }
   }
 
-  private static /*synchronized*/ Context buildPolyglotCtx() {
+  private static synchronized Context buildPolyglotCtx() {
 
-    synchronized (GraalvmLock.LOCK) {
+    //synchronized (GraalvmLock.LOCK) {
       log.info("Polyglot Lock acquired");
       val ctx = Context.newBuilder("python", "js").build();
       try {
@@ -185,6 +185,6 @@ public class Polyglot {
       }
       log.info("Polyglot Lock released ");
       return ctx;
-    }
+    //}
   }
 }

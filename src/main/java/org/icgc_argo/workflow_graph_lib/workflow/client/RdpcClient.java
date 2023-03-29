@@ -267,7 +267,7 @@ public class RdpcClient {
    */
   public Mono<String> startRun(RunRequest runRequest) {
 
-    synchronized (LOCK) {
+   // synchronized (LOCK) {
       log.debug("Lock acquired -D : "+runRequest.getWorkflowParams().toString());
       log.error("Lock acquired -E : "+runRequest.getWorkflowParams().toString());
       log.trace("Lock acquired -T : "+runRequest.getWorkflowParams().toString());
@@ -295,7 +295,8 @@ public class RdpcClient {
                       @Override
                       public void onResponse(
                           @NotNull Response<Optional<StartRunMutation.Data>> response) {
-                        synchronized (LOCK){ if (response.hasErrors()) {
+                        //synchronized (LOCK){
+                          if (response.hasErrors()) {
                           log.info(" ... processing MUTATION response for: "+runRequest.getWorkflowParams().toString());
                           log.info(" ... MUTATION response : "+response.toString());
                           handleGraphQLError(sink, response.getErrors().get(0));
@@ -327,7 +328,7 @@ public class RdpcClient {
                                           sink, "No Response from API.", RequeueableException.class));
                         }
                         log.info("Release LOCK from response processor");
-                      }
+                    //  }
                       }
 
                       @Override
@@ -338,7 +339,7 @@ public class RdpcClient {
                     });
             log.info("RELEASING LOCK -I : "+runRequest.getWorkflowParams().toString());
           });
-    }
+   // }
   }
 
   /**
