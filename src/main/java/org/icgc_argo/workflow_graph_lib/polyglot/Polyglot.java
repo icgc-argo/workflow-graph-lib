@@ -152,7 +152,7 @@ public class Polyglot {
     return runFunctionMain("python", "python", "script.py", pythonScript, eventMap);
   }
 
-  protected static synchronized Value runFunctionMain(
+  protected static Value runFunctionMain(
       final String language,
       final String languageId,
       final String scriptFileName,
@@ -169,7 +169,7 @@ public class Polyglot {
   //  }
   }
 
-  private static synchronized Context buildPolyglotCtx() {
+  private static Context buildPolyglotCtx() {
 
     //synchronized (GraalvmLock.LOCK) {
       log.info("Polyglot Lock acquired");
