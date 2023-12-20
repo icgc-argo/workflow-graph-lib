@@ -27,7 +27,6 @@ import org.icgc_argo.workflow_graph_lib.utils.PatternMatch;
  */
 @Slf4j
 public class Polyglot {
-  protected static final Context ctx = buildPolyglotCtx();
 
   /**
    * Runs a user defined function using the language specified with, a single argument that is
@@ -152,7 +151,7 @@ public class Polyglot {
     return runFunctionMain("python", "python", "script.py", pythonScript, eventMap);
   }
 
-  protected static Value runFunctionMain(
+  protected static synchronized Value runFunctionMain(
       final String language,
       final String languageId,
       final String scriptFileName,
@@ -160,11 +159,12 @@ public class Polyglot {
       final Map<String, Object> data) {
     NestedProxyObject eventMapProxy = new NestedProxyObject(data);
     final Source source = Source.newBuilder(language, script, scriptFileName).buildLiteral();
+    Context ctx = buildPolyglotCtx();
     ctx.eval(source);
     return ctx.getBindings(languageId).getMember("main").execute(eventMapProxy);
   }
 
-  private static Context buildPolyglotCtx() {
+  private static synchronized Context buildPolyglotCtx() {
     val ctx = Context.newBuilder("python", "js").build();
     try {
       ctx.eval(buildJsGraphExceptionCreator("reject", CommittableException));
